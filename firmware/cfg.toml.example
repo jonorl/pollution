@@ -1,0 +1,4 @@
+[firmware]
+wifi_ssid = ""
+wifi_psk = ""
+backend_url = "http://localhost:3000/ingest"

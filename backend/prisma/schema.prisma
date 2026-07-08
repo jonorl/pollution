@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Reading {
+  id        Int      @id @default(autoincrement())
+  deviceId  String   @default("esp32-01")
+  pm1_0     Int
+  pm2_5     Int
+  pm10      Int
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([deviceId])
+}

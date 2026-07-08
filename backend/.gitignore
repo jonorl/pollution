@@ -1,0 +1,5 @@
+# backend/.gitignore
+src/generated/
+node_modules/
+dist/
+.env

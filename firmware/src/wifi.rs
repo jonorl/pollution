@@ -49,6 +49,18 @@ pub fn connect(
     Ok(())
 }
 
+/// Reconnects if the link has dropped since startup (the driver doesn't do it on its own).
+pub fn ensure_connected(wifi: &mut BlockingWifi<EspWifi<'static>>) -> Result<()> {
+    if wifi.is_connected()? && wifi.is_up()? {
+        return Ok(());
+    }
+    warn!("WiFi down, reconnecting...");
+    let _ = wifi.disconnect();
+    try_connect(wifi)?;
+    info!("WiFi reconnected");
+    Ok(())
+}
+
 fn try_connect(wifi: &mut BlockingWifi<EspWifi<'static>>) -> Result<()> {
     wifi.connect()?;
     wifi.wait_netif_up()?;

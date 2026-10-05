@@ -92,7 +92,7 @@ impl<'d> Pms5003<'d> {
         while filled < buf.len() {
             // The driver reports silence as either a zero-length read or ESP_ERR_TIMEOUT.
             let n = match self.uart.read(&mut buf[filled..], timeout) {
-                Err(e) if e.code() == ESP_ERR_TIMEOUT as i32 => 0,
+                Err(e) if e.code() == ESP_ERR_TIMEOUT => 0,
                 other => other?,
             };
             if n == 0 {

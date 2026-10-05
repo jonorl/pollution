@@ -1,4 +1,7 @@
 [firmware]
 wifi_ssid = ""
 wifi_psk = ""
-backend_url = "http://localhost:3000/ingest"
+backend_url = "https://pollution.jonathan-orlowski.dev/ingest"
+# Must match INGEST_API_KEY on the backend
+api_key = ""
+device_id = "esp32-01"

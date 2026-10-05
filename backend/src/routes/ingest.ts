@@ -17,14 +17,14 @@ export const ingestRoute: FastifyPluginAsyncZod = async (app) => {
         body: ingestBodySchema,
         response: {
           201: z.object({ id: z.number() }),
-        //   401: z.object(),
+          401: z.null(),
         },
       },
     },
     async (request, reply) => {
       const apiKey = request.headers["x-api-key"];
       if (apiKey !== process.env.INGEST_API_KEY) {
-        return reply.code(401).send();
+        return reply.code(401).send(null);
       }
 
       const { deviceId, pm1_0, pm2_5, pm10 } = request.body;

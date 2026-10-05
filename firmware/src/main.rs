@@ -6,7 +6,7 @@ use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::peripherals::Peripherals;   // <-- was hal::prelude, now hal::peripherals
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
-use log::info;
+use log::{info, warn};
 
 use pms5003::Pms5003;
 
@@ -36,16 +36,28 @@ fn main() -> anyhow::Result<()> {
         sysloop,
     )?;
 
-    wifi::connect(&mut esp_wifi, app_config.wifi_ssid, app_config.wifi_psk)?;
+    // Readings are still worth logging without a network, so a WiFi failure
+    // shouldn't stop the sensor loop.
+    if let Err(e) = wifi::connect(&mut esp_wifi, app_config.wifi_ssid, app_config.wifi_psk) {
+        warn!("WiFi unavailable, continuing offline: {e:#}");
+    }
 
-    let mut sensor = Pms5003::new();
+    // GPIO17 -> sensor RXD, GPIO18 <- sensor TXD (UART1, routed via the GPIO matrix).
+    let mut sensor = Pms5003::new(
+        peripherals.uart1,
+        peripherals.pins.gpio17,
+        peripherals.pins.gpio18,
+    )?;
 
     loop {
-        let reading = sensor.read()?;
-        info!(
-            "PM1.0: {} µg/m³ | PM2.5: {} µg/m³ | PM10: {} µg/m³",
-            reading.pm1_0, reading.pm2_5, reading.pm10
-        );
+        // A single bad frame shouldn't stop the device; log it and try again next cycle.
+        match sensor.read() {
+            Ok(reading) => info!(
+                "PM1.0: {} µg/m³ | PM2.5: {} µg/m³ | PM10: {} µg/m³",
+                reading.pm1_0, reading.pm2_5, reading.pm10
+            ),
+            Err(e) => warn!("PMS5003 read failed: {e:#}"),
+        }
 
         // HTTP POST to backend goes here next.
 

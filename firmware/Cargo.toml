@@ -30,7 +30,6 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 anyhow = "1.0.103"
 toml-cfg = "0.2.0"
-fastrand = "2.4.1"
 
 [build-dependencies]
 embuild = "0.33"

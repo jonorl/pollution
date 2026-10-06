@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Live air-quality readings from a home-built PMS5003 sensor in Kololo, Kampala, drawn in 3D with three.js." />
+    <meta
+      name="description"
+      content="Live air-quality readings from a home-built PMS5003 sensor in Kololo, Kampala, drawn in 3D with three.js."
+    />
     <meta name="theme-color" content="#05070b" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,4 +21,18 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
+  <!-- Google tag (gtag.js) -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-047CLBQFHK"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-047CLBQFHK");
+  </script>
 </html>

@@ -312,6 +312,16 @@
   color: var(--muted);
 }
 
+.about-photo {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
 .about-stack {
   display: flex;
   flex-wrap: wrap;

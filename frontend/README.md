@@ -1,6 +1,6 @@
 # Frontend
 
-Live dashboard for the PMS5003 sensor: a three.js particle chamber and a 24-hour clock ring of minute readings, with the numbers alongside.
+Live dashboard for the PMS5003 sensor: five three.js views of the readings, with the numbers alongside.
 
 ```
 npm install
@@ -9,8 +9,12 @@ npm run dev      # reads the production API by default
 
 Set `VITE_API_URL` (see `.env.example`) to point at another API, such as a local backend.
 
-## Deploying (Netlify)
+## Deploying (Cloudflare Pages)
 
-- Base directory: `frontend`
-- Build command and publish directory come from `netlify.toml`
-- The API must be on a version with the `since` filter on `/readings`
+Pages builds this folder on every push to `main`, with these settings in its dashboard:
+
+- Root directory: `frontend`
+- Build command: `npm run build`
+- Build output: `dist`
+
+The `rename-worker` serves the site under `jonathan-orlowski.dev/pollution/`, which is why Vite's `base` is `./`.

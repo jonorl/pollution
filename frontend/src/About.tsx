@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 
+import hardwarePhoto from './assets/hardware.webp';
 import { tr } from './i18n';
 
 const REPO_URL = 'https://github.com/jonorl/pollution';
@@ -48,9 +49,14 @@ export function About() {
           <p className="about-intro">{text.intro}</p>
           <dl className="about-facts">
             {text.sections.map((section) => (
-              <div key={section.heading}>
+              <div key={section.id}>
                 <dt>{section.heading}</dt>
                 <dd>{section.body}</dd>
+                {section.id === 'hardware' && (
+                  <dd>
+                    <img className="about-photo" src={hardwarePhoto} alt={text.photo} width={720} height={766} loading="lazy" />
+                  </dd>
+                )}
               </div>
             ))}
             <div>

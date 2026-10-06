@@ -262,7 +262,7 @@ export const es: Strings = {
     tabs: 'Vistas',
     breath: { name: 'Respiración', mouse: 'Arrastrá para girar · rueda para acercar', touch: 'Arrastrá para girar · pellizcá para acercar' },
     landscape: {
-      name: 'Paisaje',
+      name: 'Escenario',
       mouse: 'Arrastrá para girar · rueda para acercar · señalá el terreno para ver cada 5 minutos',
       touch: 'Arrastrá para girar · pellizcá para acercar · tocá el terreno para ver cada 5 minutos',
     },
@@ -292,7 +292,7 @@ export const es: Strings = {
       `La lámina clara es la guía de 24 horas de la OMS, ${guideline} µg/m³. Todo lo que la atraviesa está por encima.`,
     failed: (what, every) => `No se pudo cargar ${what}. Se vuelve a intentar cada ${every}.`,
     landscape: {
-      heading: 'Paisaje · últimos 14 días',
+      heading: 'Escenario · últimos 14 días',
       body: 'La hora del día va de izquierda a derecha y cada día es una fila, con hoy adelante. La altura y el color son el PM2.5, promediado cada 5 minutos. Los hábitos aparecen como crestas que recorren los días; los hechos aislados, como picos sueltos.',
       what: 'los últimos 14 días',
       every: '5 minutos',

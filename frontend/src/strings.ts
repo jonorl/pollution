@@ -260,7 +260,7 @@ export const es: Strings = {
 
   views: {
     tabs: 'Vistas',
-    breath: { name: 'Aliento', mouse: 'Arrastrá para girar · rueda para acercar', touch: 'Arrastrá para girar · pellizcá para acercar' },
+    breath: { name: 'Respiración', mouse: 'Arrastrá para girar · rueda para acercar', touch: 'Arrastrá para girar · pellizcá para acercar' },
     landscape: {
       name: 'Paisaje',
       mouse: 'Arrastrá para girar · rueda para acercar · señalá el terreno para ver cada 5 minutos',

@@ -1,4 +1,4 @@
-import { getLocale } from './i18n';
+import { getLocale, tr } from './i18n';
 
 // Shared by the panels and the 3D views, so both describe times and numbers the same way,
 // in whichever language is chosen.
@@ -30,6 +30,13 @@ export const formatWeekday = (date: Date) => dateFormat({ weekday: 'short' }).fo
 
 export const formatNumber = (value: number, digits = 0) =>
   value.toLocaleString(getLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+/** 21.5 °C, 21,5 °C */
+export const formatTemperature = (celsius: number) => `${formatNumber(celsius, 1)} °C`;
+
+/** A tooltip's temperature line, or none for readings from before the sensor was fitted. */
+export const temperatureLines = (celsius: number | null | undefined): string[] =>
+  celsius == null || Number.isNaN(celsius) ? [] : [tr().scene.temperature(formatTemperature(celsius))];
 
 /** A value as written in prose: whole numbers without decimals, others to one place (37.5, 37,5). */
 export const formatValue = (value: number) => formatNumber(value, Number.isInteger(value) ? 0 : 1);

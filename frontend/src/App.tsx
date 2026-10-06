@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 
 import { fetchBins, fetchDaily, type Reading } from './api';
 import { BANDS, bandFor, WHO_GUIDELINE_24H } from './bands';
-import { formatNumber, formatTime, formatValue } from './format';
+import { formatNumber, formatTemperature, formatTime, formatValue } from './format';
 import { getLang, LANGS, setLang, tr, type Lang } from './i18n';
 import type { HoverInfo, ViewData } from './scene/types';
 import { ViewScene } from './scene/ViewScene';
@@ -43,6 +43,8 @@ interface DayStats {
   peak: Reading;
   low: Reading;
   minutes: number;
+  /** Lowest and highest °C; null when no reading had a temperature. */
+  temperature: { min: number; max: number } | null;
 }
 
 function summarise(readings: readonly Reading[]): DayStats | null {
@@ -50,12 +52,19 @@ function summarise(readings: readonly Reading[]): DayStats | null {
   let sum = 0;
   let peak = readings[0];
   let low = readings[0];
+  let temperature: DayStats['temperature'] = null;
   for (const reading of readings) {
     sum += reading.pm2_5;
     if (reading.pm2_5 > peak.pm2_5) peak = reading;
     if (reading.pm2_5 < low.pm2_5) low = reading;
+    const celsius = reading.temperature_c;
+    if (celsius != null) {
+      temperature = temperature
+        ? { min: Math.min(temperature.min, celsius), max: Math.max(temperature.max, celsius) }
+        : { min: celsius, max: celsius };
+    }
   }
-  return { mean: sum / readings.length, peak, low, minutes: readings.length };
+  return { mean: sum / readings.length, peak, low, minutes: readings.length, temperature };
 }
 
 export default function App() {
@@ -248,6 +257,15 @@ function NowPanel({ latest, status }: { latest: Reading | null; status: FeedStat
               <dt>PM10</dt>
               <dd>{latest.pm10}</dd>
             </div>
+            {latest.temperature_c != null && (
+              <div>
+                <dt>{text.now.temperature}</dt>
+                <dd>
+                  {formatNumber(latest.temperature_c, 1)}
+                  <span className="minor-unit">°C</span>
+                </dd>
+              </div>
+            )}
             <div>
               <dt>{text.now.whoBand}</dt>
               <dd className="minor-text">{text.bands[band.key].name}</dd>
@@ -293,6 +311,14 @@ function DayPanel({ stats, currentBand }: { stats: DayStats | null; currentBand:
                 <span>{day.ofMinutes(formatNumber(MINUTES_PER_DAY))}</span>
               </dd>
             </div>
+            {stats.temperature && (
+              <div>
+                <dt>{day.temperature}</dt>
+                <dd>
+                  {formatNumber(stats.temperature.min, 1)}–{formatTemperature(stats.temperature.max)}
+                </dd>
+              </div>
+            )}
           </dl>
         </>
       ) : (

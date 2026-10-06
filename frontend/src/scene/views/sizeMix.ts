@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 import type { Reading } from '../../api';
-import { formatNumber, formatTime } from '../../format';
+import { formatNumber, formatTime, temperatureLines } from '../../format';
 import { tr } from '../../i18n';
 import { SIZE_CLASSES } from '../../sizes';
 import { callout, clearGroup, floorPlane, label, lineSegments, marker, Stage } from '../stage';
@@ -28,12 +28,16 @@ interface Series {
   pm1: number[];
   pm25: number[];
   pm10: number[];
+  /** Mean °C, NaN where no reading in the bin had one. */
+  temp: number[];
 }
 
 function binReadings(readings: readonly Reading[], end: number): Series {
   const start = end - DAY_MS;
   const sums = [new Float64Array(BINS), new Float64Array(BINS), new Float64Array(BINS)];
   const counts = new Uint16Array(BINS);
+  const tempSums = new Float64Array(BINS);
+  const tempCounts = new Uint16Array(BINS);
   for (const reading of readings) {
     const i = Math.floor((Date.parse(reading.createdAt) - start) / BIN_MS);
     if (i < 0 || i >= BINS) continue;
@@ -41,9 +45,13 @@ function binReadings(readings: readonly Reading[], end: number): Series {
     sums[1][i] += reading.pm2_5;
     sums[2][i] += reading.pm10;
     counts[i]++;
+    if (reading.temperature_c != null) {
+      tempSums[i] += reading.temperature_c;
+      tempCounts[i]++;
+    }
   }
 
-  const series: Series = { start, known: [], layers: [[], [], []], pm1: [], pm25: [], pm10: [] };
+  const series: Series = { start, known: [], layers: [[], [], []], pm1: [], pm25: [], pm10: [], temp: [] };
   for (let i = 0; i < BINS; i++) {
     const n = counts[i];
     const pm1 = n ? sums[0][i] / n : 0;
@@ -53,6 +61,7 @@ function binReadings(readings: readonly Reading[], end: number): Series {
     series.pm1.push(pm1);
     series.pm25.push(pm25);
     series.pm10.push(pm10);
+    series.temp.push(tempCounts[i] ? tempSums[i] / tempCounts[i] : NaN);
     series.layers[0].push(Math.max(0, pm1));
     series.layers[1].push(Math.max(0, pm25 - pm1));
     series.layers[2].push(Math.max(0, pm10 - pm25));
@@ -203,6 +212,7 @@ export const createSizeMix: CreateView = (container, onHover) => {
         ? [
             `PM1 ${formatNumber(fine, 1)} · PM1–2.5 ${formatNumber(mid, 1)} · PM2.5–10 ${formatNumber(coarse, 1)}`,
             tr().scene.finePart(formatNumber(finePart)),
+            ...temperatureLines(s.temp[i]),
           ]
         : [tr().scene.noFiveMinutes],
     });

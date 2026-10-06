@@ -107,6 +107,7 @@ function BreathNotes({ latest, coarsePointer }: { latest: Reading | null; coarse
               </div>
             ))}
           </dl>
+          <p>{text.lodge}</p>
           <p className="foot">
             {counts.measured ? text.measured : text.estimated}{' '}
             {perDot > 1 ? text.perDot(formatNumber(perDot)) : text.oneDot}

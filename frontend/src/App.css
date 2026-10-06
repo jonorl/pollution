@@ -318,7 +318,9 @@
 
 .minor {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+  justify-content: start;
   gap: 0 24px;
 }
 
@@ -332,6 +334,12 @@
 .minor dd {
   font: 700 1.9rem/1 var(--font-display);
   font-variant-numeric: tabular-nums;
+}
+
+.minor-unit {
+  margin-left: 3px;
+  font: 500 12px var(--font-mono);
+  color: var(--muted);
 }
 
 .minor dd.minor-text {

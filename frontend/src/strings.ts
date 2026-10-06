@@ -17,6 +17,7 @@ export const en = {
   now: {
     heading: 'PM2.5 · latest 1-minute average',
     whoBand: 'WHO band',
+    temperature: 'Temperature',
     loading: 'Fetching the last 24 hours…',
     empty: 'No readings yet. Power the sensor and its first 1-minute average appears here within about a minute.',
   },
@@ -26,6 +27,7 @@ export const en = {
     peak: 'Peak',
     lowest: 'Lowest',
     recorded: 'Recorded',
+    temperature: 'Temperature',
     at: (time: string) => `at ${time}`,
     ofMinutes: (total: string) => `of ${total} minutes`,
     empty: 'Nothing recorded in the last 24 hours.',
@@ -112,6 +114,8 @@ export const en = {
         'Estimated from PM2.5: this reading has no particle counts, which the sensor sends once its firmware is updated.',
       perDot: (count: string) => `Each dot stands for ${count} particles.`,
       oneDot: 'Each dot is one particle, enlarged so you can see it.',
+      lodge:
+        'Particles of 2.5 µm and up mostly lodge in the airways, so they’re drawn in the windpipe and bronchi; finer ones reach deep into the lungs. Each breath in carries the reading’s colour down the airways.',
       none: 'No reading yet.',
     },
   },
@@ -132,7 +136,7 @@ export const en = {
     peakPm10: (value: string, time: string) => `Peak · ${value} µg/m³ PM10 at ${time}`,
     who: (guideline: string) => `WHO ${guideline}`,
     whoUnits: (guideline: string) => `WHO ${guideline} µg/m³`,
-    cube: '8 cm cube · about 0.5 litre',
+    notToScale: 'Not to scale',
     fiveMinuteMean: 'µg/m³ PM2.5 · 5-minute mean',
     dailyMean: 'µg/m³ PM2.5 · daily mean',
     minuteAverage: 'µg/m³ PM2.5 · 1-minute average',
@@ -141,6 +145,7 @@ export const en = {
     noMinute: 'No reading this minute',
     minutesRecorded: (count: string, total: string) => `${count} of ${total} minutes recorded`,
     finePart: (percent: string) => `${percent}% of the PM10 is finer than 2.5 µm`,
+    temperature: (value: string) => `Temperature ${value}`,
   },
 };
 
@@ -162,6 +167,7 @@ export const es: Strings = {
   now: {
     heading: 'PM2.5 · último promedio de 1 minuto',
     whoBand: 'Banda OMS',
+    temperature: 'Temperatura',
     loading: 'Cargando las últimas 24 horas…',
     empty: 'Todavía no hay lecturas. Encendé el sensor y su primer promedio de 1 minuto aparece acá en alrededor de un minuto.',
   },
@@ -171,6 +177,7 @@ export const es: Strings = {
     peak: 'Máximo',
     lowest: 'Mínimo',
     recorded: 'Registrado',
+    temperature: 'Temperatura',
     at: (time) => `a las ${time}`,
     ofMinutes: (total) => `de ${total} minutos`,
     empty: 'Nada registrado en las últimas 24 horas.',
@@ -256,6 +263,8 @@ export const es: Strings = {
         'Estimado a partir del PM2.5: esta lectura no trae conteo de partículas, que el sensor envía una vez actualizado su firmware.',
       perDot: (count) => `Cada punto representa ${count} partículas.`,
       oneDot: 'Cada punto es una partícula, agrandada para que se vea.',
+      lodge:
+        'Las partículas de 2,5 µm o más quedan mayormente atrapadas en las vías respiratorias, por eso aparecen en la tráquea y los bronquios; las más finas llegan hasta el fondo de los pulmones. Cada inspiración lleva el color de la lectura por las vías respiratorias.',
       none: 'Todavía no hay lecturas.',
     },
   },
@@ -276,7 +285,7 @@ export const es: Strings = {
     peakPm10: (value, time) => `Pico · ${value} µg/m³ PM10 a las ${time}`,
     who: (guideline) => `OMS ${guideline}`,
     whoUnits: (guideline) => `OMS ${guideline} µg/m³`,
-    cube: 'Cubo de 8 cm · alrededor de 0,5 litros',
+    notToScale: 'No está a escala',
     fiveMinuteMean: 'µg/m³ PM2.5 · promedio de 5 minutos',
     dailyMean: 'µg/m³ PM2.5 · promedio diario',
     minuteAverage: 'µg/m³ PM2.5 · promedio de 1 minuto',
@@ -285,5 +294,6 @@ export const es: Strings = {
     noMinute: 'Sin lectura este minuto',
     minutesRecorded: (count, total) => `${count} de ${total} minutos registrados`,
     finePart: (percent) => `El ${percent} % del PM10 es más fino que 2,5 µm`,
+    temperature: (value) => `Temperatura ${value}`,
   },
 };

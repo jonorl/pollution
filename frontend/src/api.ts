@@ -11,6 +11,8 @@ export interface Reading {
   n2_5?: number | null;
   n5_0?: number | null;
   n10?: number | null;
+  /** °C from the board's TMP36; null on rows from before it was fitted. */
+  temperature_c?: number | null;
   createdAt: string;
 }
 
@@ -20,6 +22,8 @@ export interface Bin {
   pm1: number;
   pm25: number;
   pm10: number;
+  /** Mean °C; null when nothing in the bucket had a temperature. */
+  temp?: number | null;
   n: number;
 }
 
@@ -29,6 +33,8 @@ export interface DailyMean {
   pm1: number;
   pm25: number;
   pm10: number;
+  /** Mean °C; null when nothing that day had a temperature. */
+  temp?: number | null;
   n: number;
 }
 

@@ -2,7 +2,7 @@
 wifi_ssid = ""
 wifi_psk = ""
 backend_url = "https://pollution.jonathan-orlowski.dev/ingest"
-# Must match INGEST_API_KEY on the backend
+# Must match POLLUTION_INGEST_API_KEY on the backend
 api_key = ""
 device_id = "esp32-01"
 # "lm35" or "tmp36": the analogue temperature sensor on GPIO10

@@ -32,7 +32,9 @@ export const ingestRoute: FastifyPluginAsyncZod = async (app) => {
     },
     async (request, reply) => {
       const apiKey = request.headers["x-api-key"];
-      if (apiKey !== process.env.INGEST_API_KEY) {
+      const expected = process.env.POLLUTION_INGEST_API_KEY;
+      // Without the check on `expected`, a missing env var would match a missing header and let anyone write.
+      if (!expected || apiKey !== expected) {
         return reply.code(401).send(null);
       }
 

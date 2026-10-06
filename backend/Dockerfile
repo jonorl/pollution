@@ -5,8 +5,8 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts
 
 COPY . .
-# prisma.config.ts insists on DATABASE_URL being set, although generate never connects.
-RUN DATABASE_URL=postgresql://build@localhost/build npm run build
+# prisma.config.ts insists on POLLUTION_DB_URL being set, although generate never connects.
+RUN POLLUTION_DB_URL=postgresql://build@localhost/build npm run build
 
 FROM node:22-alpine
 WORKDIR /app

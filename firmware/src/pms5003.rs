@@ -19,6 +19,8 @@ pub struct PmReading {
     pub pm1_0: u16,
     pub pm2_5: u16,
     pub pm10: u16,
+    /// Particles per 0.1 L at or above 0.3, 0.5, 1.0, 2.5, 5.0 and 10 µm (cumulative).
+    pub counts: [u16; 6],
 }
 
 pub struct Pms5003<'d> {
@@ -69,6 +71,8 @@ impl<'d> Pms5003<'d> {
             pm1_0: word(10),
             pm2_5: word(12),
             pm10: word(14),
+            // Bytes 16–27: the particle counts, one 16-bit word per size threshold.
+            counts: std::array::from_fn(|i| word(16 + 2 * i)),
         })
     }
 

@@ -8,7 +8,10 @@ import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer
 
 import type { Reading } from '../api';
 import { BANDS, bandFor, WHO_GUIDELINE_24H } from '../bands';
+import { formatTime, formatValue } from '../format';
+import { tr } from '../i18n';
 import { particleFragment, particleVertex, sheetFragment, sheetVertex } from './shaders';
+import type { CreateView, HoverInfo } from './types';
 
 const MINUTES = 1440;
 const DAY_MS = 86_400_000;
@@ -35,14 +38,6 @@ const TARGET = new THREE.Vector3(0, 2.8, 0);
 const START_DIRECTION = new THREE.Vector3(0.35, 0.42, 1).normalize();
 const INTRO_MS = 2400;
 const DOLLY_MS = 3200;
-
-export interface HoverInfo {
-  time: Date;
-  day: 'today' | 'yesterday';
-  reading: Reading | null;
-  x: number;
-  y: number;
-}
 
 interface ParticleClass {
   mass: (reading: Reading) => number;
@@ -88,13 +83,13 @@ function makeLabel(text: string, className: string): CSS2DObject {
 }
 
 /** The most recent occurrence of a minute-of-day slot within the last 24 hours. */
-function slotTime(slot: number): { time: Date; day: HoverInfo['day'] } {
+function slotTime(slot: number): { time: Date; day: string } {
   const now = new Date();
   const time = new Date(now);
   time.setHours(0, slot, 0, 0);
-  if (slot <= minuteOfDay(now)) return { time, day: 'today' };
+  if (slot <= minuteOfDay(now)) return { time, day: tr().scene.today };
   time.setDate(time.getDate() - 1);
-  return { time, day: 'yesterday' };
+  return { time, day: tr().scene.yesterday };
 }
 
 export class ChamberScene {
@@ -398,9 +393,9 @@ export class ChamberScene {
     needle.position.set(RING_RADIUS, SHEET_TOP / 2, 0);
     this.glowMaterials.push(emitterMaterial, needleMaterial);
 
-    const nowLabel = makeLabel('now', 'scene-label scene-label--now');
+    const nowLabel = makeLabel(tr().scene.now, 'scene-label scene-label--now');
     nowLabel.position.set(RING_RADIUS, SHEET_TOP + 0.45, 0);
-    const guideLabel = makeLabel(`WHO ${WHO_GUIDELINE_24H} µg/m³`, 'scene-label scene-label--guide');
+    const guideLabel = makeLabel(tr().scene.whoUnits(formatValue(WHO_GUIDELINE_24H)), 'scene-label scene-label--guide');
     guideLabel.position.set(RING_RADIUS, WHO_GUIDELINE_24H * UNITS_PER_UG, 0);
 
     this.beam.add(new THREE.Mesh(sheetGeometry, sheetMaterial), emitter, needle, nowLabel, guideLabel);
@@ -650,7 +645,7 @@ export class ChamberScene {
       probe.updateMatrixWorld();
       const fits = points.every((point) => {
         projected.copy(point).project(probe);
-        return projected.x >= leftEdge + 0.04 && projected.x <= 0.96 && Math.abs(projected.y) <= 0.9;
+        return projected.x >= leftEdge + 0.04 && projected.x <= 0.96 && projected.y >= -0.84 && projected.y <= 0.8;
       });
       if (fits) far = distance;
       else near = distance;
@@ -696,7 +691,16 @@ export class ChamberScene {
     }
 
     this.setHoverSlot(slot);
-    this.onHover({ ...slotTime(slot), reading: this.slots[slot], x: event.clientX, y: event.clientY });
+    const { time, day } = slotTime(slot);
+    const reading = this.slots[slot];
+    this.onHover({
+      x: event.clientX,
+      y: event.clientY,
+      heading: `${day} · ${formatTime(time)}`,
+      pm25: reading?.pm2_5 ?? null,
+      caption: tr().scene.minuteAverage,
+      details: reading ? [`PM1.0 ${reading.pm1_0} · PM10 ${reading.pm10}`] : [tr().scene.noMinute],
+    });
   };
 
   private readonly clearHover = () => {
@@ -713,3 +717,12 @@ export class ChamberScene {
     if (this.bars.instanceColor) this.bars.instanceColor.needsUpdate = true;
   }
 }
+
+/** The original view: a particle chamber inside a 24-hour clock of minute readings. */
+export const createClock: CreateView = (container, onHover) => {
+  const scene = new ChamberScene(container, onHover);
+  return {
+    setData: (data) => scene.setReadings(data.readings),
+    dispose: () => scene.dispose(),
+  };
+};

@@ -5,6 +5,7 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import { aggregatesRoute } from "./routes/aggregates.js";
 import { ingestRoute } from "./routes/ingest.js";
 import { readingsRoute } from "./routes/readings.js";
 
@@ -18,6 +19,7 @@ export function buildApp() {
 
   app.register(ingestRoute);
   app.register(readingsRoute);
+  app.register(aggregatesRoute);
 
   return app;
 }

@@ -7,6 +7,15 @@ const ingestBodySchema = z.object({
   pm1_0: z.number().int().nonnegative(),
   pm2_5: z.number().int().nonnegative(),
   pm10: z.number().int().nonnegative(),
+  // Particle counts per 0.1 L; optional so firmware that predates them keeps working.
+  n0_3: z.number().int().nonnegative().optional(),
+  n0_5: z.number().int().nonnegative().optional(),
+  n1_0: z.number().int().nonnegative().optional(),
+  n2_5: z.number().int().nonnegative().optional(),
+  n5_0: z.number().int().nonnegative().optional(),
+  n10: z.number().int().nonnegative().optional(),
+  // The TMP36's rated range; anything outside it is a wiring fault, not weather.
+  temperature_c: z.number().min(-40).max(125).optional(),
 });
 
 export const ingestRoute: FastifyPluginAsyncZod = async (app) => {
@@ -27,11 +36,7 @@ export const ingestRoute: FastifyPluginAsyncZod = async (app) => {
         return reply.code(401).send(null);
       }
 
-      const { deviceId, pm1_0, pm2_5, pm10 } = request.body;
-
-      const reading = await prisma.reading.create({
-        data: { deviceId, pm1_0, pm2_5, pm10 },
-      });
+      const reading = await prisma.reading.create({ data: request.body });
 
       return reply.code(201).send({ id: reading.id });
     }

@@ -1,4 +1,4 @@
-/* Phones and narrow windows: header, then the scene, then the panels, in one column. */
+/* Phones and narrow windows: header, view tabs, the scene, then the panels, in one column. */
 .app {
   display: flex;
   flex-direction: column;
@@ -16,8 +16,12 @@
   order: 0;
 }
 
-.scene {
+.tabs {
   order: 1;
+}
+
+.scene {
+  order: 2;
   position: relative;
   /* The ring is width-bound in portrait, so size the view to the width to avoid dead space. */
   height: clamp(320px, 92vw, 56svh);
@@ -26,15 +30,71 @@
 }
 
 .panel--now {
-  order: 2;
-}
-
-.panel--day {
   order: 3;
 }
 
-.hint {
+.panel--notes {
   order: 4;
+}
+
+.panel--day {
+  order: 5;
+}
+
+.hint {
+  order: 6;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── View tabs ─────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  max-width: 100%;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(8, 12, 19, 0.82);
+  scrollbar-width: none;
+  justify-self: start;
+  align-self: flex-start;
+}
+
+.tab {
+  flex: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: 500 12px/1 var(--font-mono);
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--band);
+  color: var(--bg);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 1px;
 }
 
 /* ── Scene ─────────────────────────────────────────────────────────── */
@@ -71,6 +131,25 @@
   color: rgba(214, 230, 255, 0.72);
 }
 
+.scene-label--strong {
+  color: var(--fg);
+}
+
+.scene-label--who {
+  font-size: 10px;
+  color: #9bd8ff;
+}
+
+.scene-callout {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(5, 7, 11, 0.8);
+  font: 500 11.5px/1.25 var(--font-body);
+  color: var(--fg);
+  white-space: nowrap;
+}
+
 .scene--fallback {
   display: grid;
   place-items: center;
@@ -98,6 +177,46 @@
 .label .unit {
   letter-spacing: 0.04em;
   text-transform: none;
+}
+
+.masthead-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.langs {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.lang {
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.lang:hover {
+  color: var(--fg);
+}
+
+.lang[aria-pressed='true'] {
+  background: var(--line);
+  color: var(--fg);
+}
+
+.lang:focus-visible {
+  outline: 2px solid var(--band);
+  outline-offset: 1px;
 }
 
 .masthead h1 {
@@ -380,6 +499,93 @@
   color: var(--faint);
 }
 
+/* ── View notes ────────────────────────────────────────────────────── */
+
+.panel--notes > p:not([class]) {
+  max-width: 60ch;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.breath-count {
+  font: 800 clamp(3rem, 7vw, 4.2rem)/0.85 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--band);
+  text-shadow: 0 0 36px color-mix(in srgb, var(--band) 30%, transparent);
+}
+
+.breath-caption {
+  font: 12px/1.45 var(--font-mono);
+  color: var(--muted);
+}
+
+.size-table {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  justify-content: start;
+  gap: 0 18px;
+}
+
+.size-table div {
+  display: grid;
+  gap: 2px;
+}
+
+.size-table dt {
+  font: 500 10px/1.4 var(--font-mono);
+  color: var(--faint);
+}
+
+.size-table dd {
+  font: 600 14px/1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.key {
+  display: grid;
+  gap: 6px;
+}
+
+.key li {
+  display: grid;
+  grid-template-columns: 12px auto 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.key-name {
+  font: 500 12px var(--font-mono);
+}
+
+.key-detail {
+  color: var(--muted);
+}
+
+.key-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 60ch;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sheet-swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border: 1px solid #9bd8ff;
+  border-radius: 3px;
+  background: rgba(155, 216, 255, 0.25);
+}
+
+.notice {
+  font-size: 13px;
+  color: var(--quiet);
+}
+
 .hint {
   font: 11px/1.4 var(--font-mono);
   letter-spacing: 0.06em;
@@ -477,6 +683,16 @@
     transform: translateX(-50%);
     white-space: nowrap;
     pointer-events: none;
+  }
+
+  /* Tabs float over the top of the scene, centred in the space the rail leaves free. */
+  .tabs {
+    position: fixed;
+    z-index: 2;
+    top: var(--gutter);
+    left: calc(var(--rail-width) + (100vw - var(--rail-width)) / 2);
+    transform: translateX(-50%);
+    backdrop-filter: blur(8px);
   }
 }
 

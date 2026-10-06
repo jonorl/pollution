@@ -15,15 +15,38 @@ struct IngestBody<'a> {
     pm1_0: u16,
     pm2_5: u16,
     pm10: u16,
+    // Particles per 0.1 L at or above each size; names match the backend's columns.
+    n0_3: u16,
+    n0_5: u16,
+    n1_0: u16,
+    n2_5: u16,
+    n5_0: u16,
+    n10: u16,
+    /// Mean over the minute, to 0.1 °C; left out entirely when the sensor gave nothing.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    temperature_c: Option<f32>,
 }
 
 /// POSTs one reading to the backend's /ingest route.
-pub fn post_reading(url: &str, api_key: &str, device_id: &str, reading: PmReading) -> Result<()> {
+pub fn post_reading(
+    url: &str,
+    api_key: &str,
+    device_id: &str,
+    reading: PmReading,
+    temperature_c: Option<f32>,
+) -> Result<()> {
     let body = serde_json::to_vec(&IngestBody {
         device_id,
         pm1_0: reading.pm1_0,
         pm2_5: reading.pm2_5,
         pm10: reading.pm10,
+        n0_3: reading.counts[0],
+        n0_5: reading.counts[1],
+        n1_0: reading.counts[2],
+        n2_5: reading.counts[3],
+        n5_0: reading.counts[4],
+        n10: reading.counts[5],
+        temperature_c: temperature_c.map(|t| (t * 10.0).round() / 10.0),
     })?;
 
     let connection = EspHttpConnection::new(&Configuration {

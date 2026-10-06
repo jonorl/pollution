@@ -8,12 +8,22 @@ datasource db {
 }
 
 model Reading {
-  id        Int      @id @default(autoincrement())
-  deviceId  String   @default("esp32-01")
-  pm1_0     Int
-  pm2_5     Int
-  pm10      Int
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  deviceId      String   @default("esp32-01")
+  pm1_0         Int
+  pm2_5         Int
+  pm10          Int
+  // Particles per 0.1 L of air at or above each size in µm, as counted by the PMS5003.
+  // Cumulative (n0_3 includes every larger size); null on rows from before the sensor sent them.
+  n0_3          Int?
+  n0_5          Int?
+  n1_0          Int?
+  n2_5          Int?
+  n5_0          Int?
+  n10           Int?
+  // °C from the board's TMP36; null on rows from before it was fitted or when it fails to read.
+  temperature_c Float?
+  createdAt     DateTime @default(now())
 
   @@index([createdAt])
   @@index([deviceId])

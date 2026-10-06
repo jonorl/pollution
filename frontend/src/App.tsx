@@ -10,6 +10,8 @@ import { usePolled } from './usePolled';
 import { useReadings, type FeedStatus } from './useReadings';
 import { ViewNotes } from './ViewNotes';
 import { DEFAULT_VIEW, findView, VIEWS, type ViewId } from './views';
+import { About } from './About';
+import { ViewIcon } from './ViewIcon';
 import './App.css';
 
 const MINUTES_PER_DAY = 1440;
@@ -119,8 +121,11 @@ export default function App() {
       <div className="rail">
         <header className="masthead">
           <div className="masthead-top">
-            <p className="eyebrow">PMS5003 · {latest?.deviceId ?? 'esp32-01'}</p>
-            <LanguageToggle current={lang} onSelect={changeLang} />
+            <p className="eyebrow">{text.place}</p>
+            <div className="masthead-actions">
+              <About />
+              <LanguageToggle current={lang} onSelect={changeLang} />
+            </div>
           </div>
           <h1>{text.title}</h1>
           <StatusLine status={status} live={live} latest={latest} />
@@ -180,7 +185,8 @@ function ViewTabs({ current, onSelect }: { current: ViewId; onSelect: (id: ViewI
           onClick={() => onSelect(view.id)}
           onKeyDown={(event) => onKeyDown(event, index)}
         >
-          {tr().views[view.id].name}
+          <ViewIcon view={view.id} />
+          <span className="tab-label">{tr().views[view.id].name}</span>
         </button>
       ))}
     </div>

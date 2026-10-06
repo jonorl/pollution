@@ -14,11 +14,11 @@ export interface ViewDef {
 }
 
 export const VIEWS: readonly ViewDef[] = [
+  { id: 'clock', load: () => import('./scene/ChamberScene').then((m) => m.createClock) },
   { id: 'breath', load: () => import('./scene/views/breath').then((m) => m.createBreath) },
   { id: 'landscape', needsBins: true, load: () => import('./scene/views/landscape').then((m) => m.createLandscape) },
-  { id: 'calendar', needsDaily: true, load: () => import('./scene/views/calendar').then((m) => m.createCalendar) },
   { id: 'size-mix', load: () => import('./scene/views/sizeMix').then((m) => m.createSizeMix) },
-  { id: 'clock', load: () => import('./scene/ChamberScene').then((m) => m.createClock) },
+  { id: 'calendar', needsDaily: true, load: () => import('./scene/views/calendar').then((m) => m.createCalendar) },
 ];
 
 export const DEFAULT_VIEW: ViewId = 'breath';

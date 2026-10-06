@@ -14,10 +14,11 @@ interface ViewSceneProps {
   onHover: (hover: HoverInfo | null) => void;
 }
 
+// three.js has needed WebGL 2 since r163; WebGL 1 alone isn't enough.
 function supportsWebGL(): boolean {
   try {
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
+    const context = canvas.getContext('webgl2');
     // Release the probe context straight away; browsers cap how many can be live.
     context?.getExtension('WEBGL_lose_context')?.loseContext();
     return context !== null;
@@ -32,6 +33,7 @@ export function ViewScene({ view, lang, data, label, onHover }: ViewSceneProps) 
   const dataRef = useRef(data);
   const hoverRef = useRef(onHover);
   const [supported] = useState(supportsWebGL);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     hoverRef.current = onHover;
@@ -44,12 +46,18 @@ export function ViewScene({ view, lang, data, label, onHover }: ViewSceneProps) 
     let scene: SceneView | null = null;
     let cancelled = false;
 
-    void view.load().then((create) => {
-      if (cancelled) return;
-      scene = create(container, (hover) => hoverRef.current(hover));
-      scene.setData(dataRef.current);
-      sceneRef.current = scene;
-    });
+    view
+      .load()
+      .then((create) => {
+        if (cancelled) return;
+        // Creating the renderer can still fail where WebGL 2 is reported, e.g. on a blocklisted GPU.
+        scene = create(container, (hover) => hoverRef.current(hover));
+        scene.setData(dataRef.current);
+        sceneRef.current = scene;
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
 
     return () => {
       cancelled = true;
@@ -64,7 +72,7 @@ export function ViewScene({ view, lang, data, label, onHover }: ViewSceneProps) 
     sceneRef.current?.setData(data);
   }, [data]);
 
-  if (!supported) {
+  if (!supported || failed) {
     return (
       <div id="view-panel" className="scene scene--fallback" role="tabpanel" aria-labelledby={`tab-${view.id}`}>
         <p>{tr().views.noWebgl}</p>

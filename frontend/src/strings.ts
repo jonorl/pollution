@@ -4,6 +4,32 @@
 export const en = {
   title: 'Air quality',
   language: 'Language',
+  place: 'Kololo, Kampala',
+
+  about: {
+    open: 'About',
+    title: 'About this project',
+    close: 'Close',
+    intro:
+      'A home-built air-quality monitor: a laser particle sensor, a microcontroller and a small web stack, measuring the air in my office around the clock.',
+    sections: [
+      { heading: 'Where', body: 'My office in Kololo, Kampala, Uganda.' },
+      {
+        heading: 'Hardware',
+        body: 'A Plantower PMS5003 laser sensor reports PM1.0, PM2.5 and PM10, and counts particles from 0.3 µm up. A TMP36 reads the temperature. Both are wired to an ESP32-S3 microcontroller, whose RGB LED glows in the same band colours as this page.',
+      },
+      {
+        heading: 'On the device',
+        body: 'Firmware written in Rust reads the sensor every 5 seconds, drops any reading that fails its checksum, and averages 12 of them into one a minute. Each temperature is the mean of 32 quick samples, to smooth out electrical noise.',
+      },
+      {
+        heading: 'Pipeline',
+        body: 'Every minute the average goes over HTTPS, with the server’s certificate checked, to an API on a VPS that stores it in PostgreSQL. This page asks for new readings every 30 seconds; the database works out the 5-minute and daily averages the longer views use.',
+      },
+    ],
+    stack: 'Stack',
+    source: 'Source code on GitHub',
+  },
 
   status: {
     connecting: 'Connecting…',
@@ -154,6 +180,32 @@ export type Strings = typeof en;
 export const es: Strings = {
   title: 'Calidad del aire',
   language: 'Idioma',
+  place: 'Kololo, Kampala',
+
+  about: {
+    open: 'Acerca de',
+    title: 'Acerca del proyecto',
+    close: 'Cerrar',
+    intro:
+      'Un monitor de calidad del aire hecho en casa: un sensor láser de partículas, un microcontrolador y una pequeña aplicación web, midiendo el aire de mi oficina las 24 horas.',
+    sections: [
+      { heading: 'Dónde', body: 'Mi oficina en Kololo, Kampala, Uganda.' },
+      {
+        heading: 'Hardware',
+        body: 'Un sensor láser Plantower PMS5003 mide PM1.0, PM2.5 y PM10, y cuenta partículas desde 0,3 µm. Un TMP36 mide la temperatura. Los dos están conectados a un microcontrolador ESP32-S3, cuyo LED RGB se ilumina con los mismos colores de banda que esta página.',
+      },
+      {
+        heading: 'En el dispositivo',
+        body: 'El firmware, escrito en Rust, lee el sensor cada 5 segundos, descarta las lecturas con checksum inválido y promedia 12 en una por minuto. Cada temperatura es el promedio de 32 muestras rápidas, para suavizar el ruido eléctrico.',
+      },
+      {
+        heading: 'Recorrido de los datos',
+        body: 'Cada minuto el promedio viaja por HTTPS, verificando el certificado del servidor, a una API en un VPS que lo guarda en PostgreSQL. Esta página pide lecturas nuevas cada 30 segundos; los promedios de 5 minutos y diarios de las vistas más largas los calcula la base de datos.',
+      },
+    ],
+    stack: 'Tecnologías',
+    source: 'Código fuente en GitHub',
+  },
 
   status: {
     connecting: 'Conectando…',
@@ -200,7 +252,7 @@ export const es: Strings = {
 
   views: {
     tabs: 'Vistas',
-    breath: { name: 'Respiración', mouse: 'Arrastrá para girar · rueda para acercar', touch: 'Arrastrá para girar · pellizcá para acercar' },
+    breath: { name: 'Aliento', mouse: 'Arrastrá para girar · rueda para acercar', touch: 'Arrastrá para girar · pellizcá para acercar' },
     landscape: {
       name: 'Paisaje',
       mouse: 'Arrastrá para girar · rueda para acercar · señalá el terreno para ver cada 5 minutos',

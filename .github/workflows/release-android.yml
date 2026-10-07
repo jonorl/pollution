@@ -1,0 +1,97 @@
+name: Release Android app
+
+# Builds a signed APK and attaches it to a GitHub release. To release, bump "version" in
+# mobile/package.json, then push a tag that matches it:
+#   git tag mobile-v1.0.0 && git push origin mobile-v1.0.0
+on:
+  push:
+    tags: ['mobile-v*']
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check the tag matches the app's version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "mobile-v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match version $version in mobile/package.json"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      # Without the key the build would fall back to the debug key, and phones refuse to update
+      # an installed release with an APK signed by a different key.
+      - name: Check the upload key is configured
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Set the four ANDROID_UPLOAD_* secrets first; mobile/README.md explains how"
+            exit 1
+          fi
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check and lint
+        run: |
+          npm run typecheck
+          npm run lint
+
+      - name: Generate the Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Decode the upload key
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+        run: echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+
+      # arm64-v8a covers nearly every phone in use; armeabi-v7a the older 32-bit ones.
+      - name: Build the APK
+        working-directory: mobile/android
+        env:
+          ORG_GRADLE_PROJECT_POLLUTION_UPLOAD_STORE_FILE: ${{ runner.temp }}/upload.jks
+          ORG_GRADLE_PROJECT_POLLUTION_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_POLLUTION_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_POLLUTION_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk="air-quality-$VERSION.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+          gh release create "$GITHUB_REF_NAME" "$apk" \
+            --title "Android app $VERSION" \
+            --notes "Download $apk on an Android phone (Android 7 or later) and open it to install. You may need to allow installs from your browser or file manager first."

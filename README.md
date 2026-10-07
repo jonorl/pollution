@@ -1,6 +1,6 @@
 # pollution
 
-A home-built air-quality monitor. A laser particle sensor in my office in Kololo, Kampala, Uganda, reports every minute to a small API, and a three.js dashboard draws the readings live.
+A home-built air-quality monitor. A laser particle sensor in my office in Kololo, Kampala, Uganda, reports every minute to a small API, and a three.js dashboard draws the readings live, on the web and in an Android app.
 
 **Live:** https://jonathan-orlowski.dev/pollution/
 
@@ -10,8 +10,10 @@ A home-built air-quality monitor. A laser particle sensor in my office in Kololo
 PMS5003 + TMP36 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ──► PostgreSQL
                      averages 1 min            (Docker, VPS)         │
                                                                      ▼
-                     React + three.js dashboard ◄── polls every 30 s
-                     (Cloudflare Pages)
+                     React + three.js dashboard ◄─┬─ polls every 30 s
+                     (Cloudflare Pages)           │
+                     React Native + three.js app ◄┘
+                     (Android, Expo)
 ```
 
 | Folder | What it is |
@@ -19,6 +21,7 @@ PMS5003 + TMP36 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ─�
 | [`firmware/`](firmware) | Rust firmware for the ESP32-S3: reads the sensors, averages, uploads |
 | [`backend/`](backend) | Fastify + Prisma API that stores readings and serves them, raw and averaged |
 | [`frontend/`](frontend) | React + three.js dashboard |
+| [`mobile/`](mobile) | The dashboard as a React Native (Expo) Android app |
 
 ## Hardware
 
@@ -95,3 +98,17 @@ npm run dev                    # uses the live API; set VITE_API_URL for another
 ```
 
 **Deploying:** Cloudflare Pages builds `frontend/` on every push to `main`, and a Worker serves it under `jonathan-orlowski.dev/pollution/`.
+
+## Mobile
+
+The same dashboard as an Android app, in React Native and Expo. The five views run the web's three.js scenes through expo-gl, with touch gestures in place of the mouse and React Native drawing the labels. It stops polling while it's in the background.
+
+**Download:** the APK is attached to each [release](https://github.com/jonorl/pollution/releases). It needs Android 7 or later; the phone asks once to allow installs from your browser.
+
+```sh
+cd mobile
+npm install
+npx expo start                 # press a for Android, or scan the QR code with Expo Go
+```
+
+**Releasing:** pushing a `mobile-v*` tag runs [`release-android.yml`](.github/workflows/release-android.yml), which builds a signed APK and attaches it to a GitHub release. [`mobile/README.md`](mobile/README.md) covers the signing key and local builds.

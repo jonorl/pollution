@@ -133,6 +133,17 @@ export const en = {
       lodge:
         'Particles of 2.5 µm and up mostly lodge in the airways, so they’re drawn in the windpipe and bronchi; finer ones reach deep into the lungs. Each breath in carries the reading’s colour down the airways.',
       none: 'No reading yet.',
+      lungs: (mean: string) =>
+        `The lungs show what years of air like the last 24 hours’ average, ${mean} µg/m³, are linked to. A single day like it does no such thing.`,
+      stages: {
+        good: 'Healthy: clear tissue, open airways and a slow, full breath.',
+        moderate: 'The first soot: dark flecks where the cells that swallow particles store them.',
+        elevated: 'More soot, and the airways redden as they become inflamed.',
+        high: 'Inflamed, thickened airways, the smallest ones starting to close, and quicker, shallower breaths.',
+        veryHigh: 'Blackened tissue, small airways lost and fast, shallow breathing.',
+        extreme: 'Heavy soot, tissue pitted as in early emphysema, laboured breathing and a cough.',
+      },
+      lungsFoot: 'Exaggerated so it shows. Based on links found in long-term studies of PM2.5; not a diagnosis.',
     },
   },
 
@@ -297,6 +308,17 @@ export const es: Strings = {
       lodge:
         'Las partículas de 2,5 µm o más quedan mayormente atrapadas en las vías respiratorias, por eso aparecen en la tráquea y los bronquios; las más finas llegan hasta el fondo de los pulmones. Cada inspiración lleva el color de la lectura por las vías respiratorias.',
       none: 'Todavía no hay lecturas.',
+      lungs: (mean) =>
+        `Los pulmones muestran lo que se asocia a años de respirar aire como el promedio de las últimas 24 horas, ${mean} µg/m³. Un solo día así no causa esto.`,
+      stages: {
+        good: 'Sanos: tejido limpio, vías respiratorias abiertas y una respiración lenta y profunda.',
+        moderate: 'El primer hollín: manchitas oscuras donde las células que tragan partículas las guardan.',
+        elevated: 'Más hollín, y las vías respiratorias se enrojecen al inflamarse.',
+        high: 'Vías respiratorias inflamadas y engrosadas, las más chicas empezando a cerrarse, y respiraciones más cortas y rápidas.',
+        veryHigh: 'Tejido ennegrecido, vías pequeñas perdidas y una respiración rápida y corta.',
+        extreme: 'Mucho hollín, tejido picado como en un enfisema incipiente, respiración trabajosa y tos.',
+      },
+      lungsFoot: 'Exagerado para que se vea. Se basa en asociaciones de estudios de largo plazo sobre el PM2.5; no es un diagnóstico.',
     },
   },
 

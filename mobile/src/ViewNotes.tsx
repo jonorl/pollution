@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Reading } from './api';
-import { WHO_GUIDELINE_24H } from './bands';
+import { bandFor, WHO_GUIDELINE_24H } from './bands';
 import { breathCounts, particlesPerDot, SIZE_THRESHOLDS } from './breath';
 import { formatNumber, formatValue } from './format';
 import { tr } from './i18n';
@@ -14,6 +14,8 @@ import type { ViewId } from './views';
 interface ViewNotesProps {
   view: ViewId;
   latest: Reading | null;
+  /** Mean PM2.5 over the last 24 hours, which sets how the breath view draws the lungs. */
+  dayMean: number | null;
   /** The view's own data failed to load (landscape and calendar fetch extra data). */
   failed: boolean;
 }
@@ -27,12 +29,12 @@ function Guideline() {
   );
 }
 
-export function ViewNotes({ view, latest, failed }: ViewNotesProps) {
+export function ViewNotes({ view, latest, dayMean, failed }: ViewNotesProps) {
   const notes = tr().notes;
 
   switch (view) {
     case 'breath':
-      return <BreathNotes latest={latest} />;
+      return <BreathNotes latest={latest} dayMean={dayMean} />;
 
     case 'landscape':
       return (
@@ -92,7 +94,7 @@ export function ViewNotes({ view, latest, failed }: ViewNotesProps) {
   }
 }
 
-function BreathNotes({ latest }: { latest: Reading | null }) {
+function BreathNotes({ latest, dayMean }: { latest: Reading | null; dayMean: number | null }) {
   const band = useContext(BandColour);
   const text = tr().notes.breath;
   const counts = breathCounts(latest);
@@ -116,8 +118,12 @@ function BreathNotes({ latest }: { latest: Reading | null }) {
             ))}
           </View>
           <Text style={panel.body}>{text.lodge}</Text>
+          {dayMean !== null && (
+            <Text style={panel.body}>{text.lungs(formatValue(dayMean))} {text.stages[bandFor(dayMean).key]}</Text>
+          )}
           <Text style={panel.foot}>
             {counts.measured ? text.measured : text.estimated} {perDot > 1 ? text.perDot(formatNumber(perDot)) : text.oneDot}
+            {dayMean !== null && ` ${text.lungsFoot}`}
           </Text>
         </>
       ) : (

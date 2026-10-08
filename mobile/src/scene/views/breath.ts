@@ -1,18 +1,59 @@
 import * as THREE from 'three';
 
 import { bandFor } from '../../bands';
-import { breathCounts, MAX_DOTS, particlesPerDot } from '../../breath';
+import { breathCounts, lungDamage, MAX_DOTS, meanPm25, particlesPerDot } from '../../breath';
 import { tr } from '../../i18n';
 import { APEX_Y, buildLungs, TRACHEA_TOP_Y } from '../lungs';
 import { label, Stage } from '../stage';
 import type { CreateView } from '../types';
 
-// A resting breath every 5 s: in for 2, out for 3.
+// A resting breath every 5 s: in for 2, out for 3. Damaged lungs hold less air, so breathing
+// grows quicker and shallower.
 const BREATH_S = 5;
+const LABOURED_BREATH_S = 2.8;
 const INHALE = 0.4;
 // How far the lungs swell on a breath in; the diaphragm draws them mostly downwards.
 const SWELL = new THREE.Vector3(0.035, 0.06, 0.035);
+const LABOURED_SWELL = 0.35;
+// At the worst levels a double cough every few seconds.
+const COUGH_S = 9;
 const easeInOut = (t: number) => t * t * (3 - 2 * t);
+
+// The lungs are drawn as if every day were like the last 24 hours, so their state follows the
+// 24-hour mean and eases over a few seconds rather than flickering with each minute's reading.
+// 0 is healthy, 1 the worst; see lungDamage for the scale.
+const damageUniforms = /* glsl */ `
+  uniform float uDamage;
+  uniform float uTime;
+
+  float hash(vec3 p) {
+    p = fract(p * 0.3183099 + 0.1);
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  }
+  float noise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
+      mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y),
+      f.z);
+  }
+
+  // Pitting where the air sacs' walls break down, as in emphysema: how much of the tissue is lost,
+  // and the pattern it is cut from.
+  float pitting() { return smoothstep(0.6, 1.0, uDamage) * 0.4; }
+  float pitAt(vec3 p) { return noise(p * 14.0); }
+
+  // Soot: carbon swallowed by the lungs' scavenger cells collects in dark flecks, then blotches.
+  float sootAt(vec3 p) {
+    float grime = 0.6 * noise(p * 2.5) + 0.4 * noise(p * 11.0);
+    // Front-loaded, so the first flecks show at the first band above the guideline.
+    float threshold = 1.0 - 0.6 * pow(uDamage, 0.6);
+    return smoothstep(threshold, threshold + 0.06, grime);
+  }
+`;
 
 // The air coming in is drawn as a band of light, in the reading's colour, running down the
 // airways on each breath in and back up, fainter, on each breath out. Every material shares it.
@@ -28,7 +69,6 @@ const waveUniforms = /* glsl */ `
 `;
 
 const particleVertex = /* glsl */ `
-  uniform float uTime;
   uniform float uCount;
   uniform float uScale;
   uniform float uPixelRatio;
@@ -41,6 +81,7 @@ const particleVertex = /* glsl */ `
   varying float vAlpha;
   varying float vGlint;
   ${waveUniforms}
+  ${damageUniforms}
 
   void main() {
     // Each particle draws one size class, so the dot sizes follow the sensor's size counts.
@@ -87,13 +128,17 @@ const particleFragment = /* glsl */ `
 `;
 
 const shellVertex = /* glsl */ `
+  uniform float uRings;
+  uniform float uDamage;
   varying vec3 vNormal;
   varying vec3 vView;
   varying vec3 vPosition;
 
   void main() {
     vPosition = position;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    // Inflamed airway walls swell and thicken.
+    vec3 p = position + normal * uRings * 0.07 * smoothstep(0.2, 0.8, uDamage);
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
     vNormal = normalMatrix * normal;
     vView = -mv.xyz;
     gl_Position = projectionMatrix * mv;
@@ -111,6 +156,7 @@ const shellFragment = /* glsl */ `
   varying vec3 vView;
   varying vec3 vPosition;
   ${waveUniforms}
+  ${damageUniforms}
 
   float seam(vec4 plane) {
     if (dot(plane.xyz, plane.xyz) == 0.0) return 0.0;
@@ -120,6 +166,14 @@ const shellFragment = /* glsl */ `
 
   void main() {
     float vY = vPosition.y;
+    float tissue = 1.0 - uRings;
+
+    // The holes' edges catch the light.
+    float lost = tissue * pitting();
+    float pit = pitAt(vPosition);
+    if (pit < lost) discard;
+    float pitEdge = lost > 0.0 ? 1.0 - smoothstep(lost, lost + 0.05, pit) : 0.0;
+
     float fissures = seam(uFissureA);
     if (dot(uFissureA.xyz, vPosition) > uFissureA.w) fissures = max(fissures, seam(uFissureB));
 
@@ -128,19 +182,54 @@ const shellFragment = /* glsl */ `
     float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.0);
     // The cartilage rings that hold the windpipe open, about one every centimetre.
     float ring = uRings * smoothstep(0.55, 0.95, sin(vY * 22.0));
-    gl_FragColor = vec4(uTint * (0.04 + 0.55 * rim + 0.2 * ring + 0.3 * fissures) + uGlint * waveAt(vY) * (0.15 + rim), 1.0);
+
+    // Inflamed airways redden and throb.
+    float inflamed = uRings * smoothstep(0.15, 0.7, uDamage) * (0.8 + 0.2 * sin(uTime * 2.4));
+    vec3 tint = mix(uTint, vec3(1.0, 0.32, 0.26), inflamed);
+    vec3 colour = tint * (0.04 + 0.55 * rim + 0.2 * ring + 0.3 * fissures + 0.5 * pitEdge);
+
+    float soot = tissue * sootAt(vPosition);
+    colour *= 1.0 - 0.8 * soot;
+
+    gl_FragColor = vec4(colour + uGlint * waveAt(vY) * (0.15 + rim) * (1.0 - 0.7 * soot), 1.0);
+  }
+`;
+
+// Additive light can't darken anything, so the soot is a second, normally blended skin over the
+// lungs' near faces, drawn after the particles so it hides the glow behind it.
+const sootVertex = /* glsl */ `
+  varying vec3 vPosition;
+
+  void main() {
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const sootFragment = /* glsl */ `
+  varying vec3 vPosition;
+  ${damageUniforms}
+
+  void main() {
+    if (pitAt(vPosition) < pitting()) discard;
+    float soot = sootAt(vPosition);
+    if (soot < 0.01) discard;
+    gl_FragColor = vec4(0.05, 0.04, 0.035, soot * 0.8);
   }
 `;
 
 const branchVertex = /* glsl */ `
+  uniform float uDamage;
   attribute float aGeneration;
   varying float vY;
   varying float vFade;
 
   void main() {
     vY = position.y;
-    // Finer branches fade, so the tree reads as depth rather than a tangle.
-    vFade = pow(0.8, aGeneration - 2.0);
+    // Finer branches fade, so the tree reads as depth rather than a tangle. The smallest airways
+    // are the first to narrow and close, so damage prunes the tree from its tips inwards.
+    float lost = smoothstep(0.25, 1.0, uDamage) * smoothstep(9.0 - 5.0 * uDamage, 10.0 - 5.0 * uDamage, aGeneration);
+    vFade = pow(0.8, aGeneration - 2.0) * (1.0 - lost);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -174,7 +263,11 @@ export const createBreath: CreateView = (host) => {
     uWaveWidth: { value: 0.24 },
     uWaveStrength: { value: 0 },
   };
-  const tint = { value: new THREE.Color('#7fa6d6') };
+  // Healthy tissue is a clean blue; damaged tissue dulls towards a dirty grey-brown.
+  const healthy = new THREE.Color('#7fa6d6');
+  const dulled = new THREE.Color('#8f8073');
+  const tint = { value: healthy.clone() };
+  const damage = { uDamage: { value: 0 }, uTime: { value: 0 } };
 
   // The breathing group's origin is at the top of the lungs, so a breath in swells them downwards.
   const breathing = new THREE.Group();
@@ -186,13 +279,25 @@ export const createBreath: CreateView = (host) => {
 
   const none = new THREE.Vector4();
   const shell = (rings: number, [a, b]: (THREE.Vector4 | null)[] = []) => new THREE.ShaderMaterial({
-    uniforms: { ...wave, uTint: tint, uRings: { value: rings }, uFissureA: { value: a ?? none }, uFissureB: { value: b ?? none } },
+    uniforms: { ...wave, ...damage, uTint: tint, uRings: { value: rings }, uFissureA: { value: a ?? none }, uFissureB: { value: b ?? none } },
     vertexShader: shellVertex,
     fragmentShader: shellFragment,
     side: THREE.DoubleSide,
     ...additive,
   });
   for (const surface of lungs.surfaces) body.add(new THREE.Mesh(surface.geometry, shell(0, surface.fissures)));
+  const sootMaterial = new THREE.ShaderMaterial({
+    uniforms: damage,
+    vertexShader: sootVertex,
+    fragmentShader: sootFragment,
+    transparent: true,
+    depthWrite: false,
+  });
+  for (const surface of lungs.surfaces) {
+    const soot = new THREE.Mesh(surface.geometry, sootMaterial);
+    soot.renderOrder = 1;
+    body.add(soot);
+  }
   const airwayShell = shell(1);
   for (const geometry of lungs.tubes) body.add(new THREE.Mesh(geometry, airwayShell));
 
@@ -206,7 +311,7 @@ export const createBreath: CreateView = (host) => {
   branchGeometry.setAttribute('position', new THREE.Float32BufferAttribute(branchPositions, 3));
   branchGeometry.setAttribute('aGeneration', new THREE.Float32BufferAttribute(generations, 1));
   body.add(new THREE.LineSegments(branchGeometry, new THREE.ShaderMaterial({
-    uniforms: { ...wave, uTint: tint },
+    uniforms: { ...wave, ...damage, uTint: tint },
     vertexShader: branchVertex,
     fragmentShader: branchFragment,
     ...additive,
@@ -226,7 +331,7 @@ export const createBreath: CreateView = (host) => {
 
   const uniforms = {
     ...wave,
-    uTime: { value: 0 },
+    ...damage,
     uCount: { value: 0 },
     uScale: { value: 1 },
     uPixelRatio: { value: 1 },
@@ -272,16 +377,32 @@ export const createBreath: CreateView = (host) => {
   const waveTop = TRACHEA_TOP_Y + 1;
   const waveBottom = base - 1;
   let target = 0;
+  let damageTarget = 0;
+  // Accumulated rather than taken from the clock, so a change of breathing rate doesn't jump the phase.
+  let phase = 0;
   stage.onFrame((dt, t) => {
     const clock = stage.reducedMotion ? t * 0.2 : t;
-    uniforms.uTime.value = clock;
+    const step = stage.reducedMotion ? dt * 0.2 : dt;
+    damage.uTime.value = clock;
     uniforms.uCount.value += (target - uniforms.uCount.value) * (1 - Math.exp(-dt * 2.5));
+    const d = (damage.uDamage.value += (damageTarget - damage.uDamage.value) * (1 - Math.exp(-dt * 0.8)));
+    tint.value.lerpColors(healthy, dulled, d);
 
-    const phase = (clock / BREATH_S) % 1;
+    phase = (phase + step / THREE.MathUtils.lerp(BREATH_S, LABOURED_BREATH_S, d)) % 1;
     const breathingIn = phase < INHALE;
     const progress = easeInOut(breathingIn ? phase / INHALE : (phase - INHALE) / (1 - INHALE));
-    const inflation = breathingIn ? progress : 1 - progress;
-    breathing.scale.set(1 + SWELL.x * inflation, 1 + SWELL.y * inflation, 1 + SWELL.z * inflation);
+    const inflation = (breathingIn ? progress : 1 - progress) * (1 - (1 - LABOURED_SWELL) * d);
+
+    // Two sharp contractions, a quarter of a second apart.
+    const coughing = stage.reducedMotion ? 0 : THREE.MathUtils.smoothstep(d, 0.8, 0.95);
+    const c = clock % COUGH_S;
+    const cough = coughing * (Math.exp(-(((c - 0.15) / 0.06) ** 2)) + 0.7 * Math.exp(-(((c - 0.4) / 0.06) ** 2)));
+    const squeeze = 1 - 0.035 * cough;
+    breathing.scale.set(
+      (1 + SWELL.x * inflation) * squeeze,
+      (1 + SWELL.y * inflation) * squeeze,
+      (1 + SWELL.z * inflation) * squeeze,
+    );
     wave.uWave.value = breathingIn
       ? THREE.MathUtils.lerp(waveTop, waveBottom, progress)
       : THREE.MathUtils.lerp(waveBottom, waveTop, progress);
@@ -294,6 +415,9 @@ export const createBreath: CreateView = (host) => {
       const latest = readings.at(-1) ?? null;
       if (latest === lastLatest) return;
       lastLatest = latest;
+
+      const mean = meanPm25(readings);
+      damageTarget = mean === null ? 0 : lungDamage(mean);
 
       const counts = breathCounts(latest);
       if (counts) {

@@ -45,3 +45,28 @@ export function breathCounts(reading: Reading | null): BreathCounts | null {
   }
   return { total: reading.pm2_5 * ESTIMATE_PER_UG * perBreath, shares: TYPICAL_SHARES, measured: false };
 }
+
+// How far along the breath view draws the lungs' decline, 0 healthy to 1 worst, at each PM2.5.
+// Starts at WHO's annual guideline (5), below which no long-term harm is clearly shown, and
+// passes through the band edges so each band colour has its own look.
+const DAMAGE_STOPS: readonly [number, number][] = [
+  [5, 0], [15, 0.12], [25, 0.3], [37.5, 0.5], [50, 0.68], [75, 0.88], [110, 1],
+];
+
+export function lungDamage(pm25: number): number {
+  if (pm25 <= DAMAGE_STOPS[0][0]) return 0;
+  for (let i = 1; i < DAMAGE_STOPS.length; i++) {
+    const [x1, y1] = DAMAGE_STOPS[i];
+    if (pm25 <= x1) {
+      const [x0, y0] = DAMAGE_STOPS[i - 1];
+      return y0 + ((pm25 - x0) / (x1 - x0)) * (y1 - y0);
+    }
+  }
+  return 1;
+}
+
+/** Mean PM2.5 over the readings, or null with none. */
+export function meanPm25(readings: readonly Reading[]): number | null {
+  if (readings.length === 0) return null;
+  return readings.reduce((sum, r) => sum + r.pm2_5, 0) / readings.length;
+}

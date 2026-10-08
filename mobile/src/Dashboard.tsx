@@ -143,6 +143,7 @@ export function Dashboard({ initialLang, initialView }: { initialLang: Lang; ini
           <ViewNotes
             view={viewId}
             latest={latest}
+            dayMean={stats?.mean ?? null}
             failed={(view.needsBins && bins.failed) || (view.needsDaily && daily.failed) || false}
           />
           <DayPanel stats={stats} currentBand={band?.key ?? null} />

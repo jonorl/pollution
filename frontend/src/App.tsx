@@ -134,6 +134,7 @@ export default function App() {
         <ViewNotes
           view={viewId}
           latest={latest}
+          dayMean={stats?.mean ?? null}
           coarsePointer={coarsePointer}
           failed={(view.needsBins && bins.failed) || (view.needsDaily && daily.failed) || false}
         />

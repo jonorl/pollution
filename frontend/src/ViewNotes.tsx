@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import type { Reading } from './api';
-import { WHO_GUIDELINE_24H } from './bands';
+import { bandFor, WHO_GUIDELINE_24H } from './bands';
 import { breathCounts, particlesPerDot, SIZE_THRESHOLDS } from './breath';
 import { formatNumber, formatValue } from './format';
 import { tr } from './i18n';
@@ -11,6 +11,8 @@ import type { ViewId } from './views';
 interface ViewNotesProps {
   view: ViewId;
   latest: Reading | null;
+  /** Mean PM2.5 over the last 24 hours, which sets how the breath view draws the lungs. */
+  dayMean: number | null;
   coarsePointer: boolean;
   /** The view's own data failed to load (landscape and calendar fetch extra data). */
   failed: boolean;
@@ -27,12 +29,12 @@ function Guideline() {
   );
 }
 
-export function ViewNotes({ view, latest, coarsePointer, failed }: ViewNotesProps) {
+export function ViewNotes({ view, latest, dayMean, coarsePointer, failed }: ViewNotesProps) {
   const notes = tr().notes;
 
   switch (view) {
     case 'breath':
-      return <BreathNotes latest={latest} coarsePointer={coarsePointer} />;
+      return <BreathNotes latest={latest} dayMean={dayMean} coarsePointer={coarsePointer} />;
 
     case 'landscape':
       return (
@@ -87,7 +89,7 @@ export function ViewNotes({ view, latest, coarsePointer, failed }: ViewNotesProp
   }
 }
 
-function BreathNotes({ latest, coarsePointer }: { latest: Reading | null; coarsePointer: boolean }) {
+function BreathNotes({ latest, dayMean, coarsePointer }: { latest: Reading | null; dayMean: number | null; coarsePointer: boolean }) {
   const text = tr().notes.breath;
   const counts = breathCounts(latest);
   const perDot = counts ? particlesPerDot(counts.total, coarsePointer) : 1;
@@ -108,9 +110,11 @@ function BreathNotes({ latest, coarsePointer }: { latest: Reading | null; coarse
             ))}
           </dl>
           <p>{text.lodge}</p>
+          {dayMean !== null && <p>{text.lungs(formatValue(dayMean))} {text.stages[bandFor(dayMean).key]}</p>}
           <p className="foot">
             {counts.measured ? text.measured : text.estimated}{' '}
             {perDot > 1 ? text.perDot(formatNumber(perDot)) : text.oneDot}
+            {dayMean !== null && <> {text.lungsFoot}</>}
           </p>
         </>
       ) : (

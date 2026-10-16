@@ -315,7 +315,6 @@
 .about-photo {
   display: block;
   width: 100%;
-  max-width: 360px;
   height: auto;
   margin-top: 10px;
   border: 1px solid var(--line);

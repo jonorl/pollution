@@ -4,6 +4,8 @@ A home-built air-quality monitor. A laser particle sensor in my office in Kololo
 
 **Live:** https://jonathan-orlowski.dev/pollution/ · **Android app:** [download the APK](https://github.com/jonorl/pollution/releases/download/Android/pollution.apk)
 
+![The dashboard cycling through its five views: the clock, breath, landscape, size mix and calendar](docs/demo.gif)
+
 ## How it fits together
 
 ```

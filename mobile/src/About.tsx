@@ -26,7 +26,7 @@ const STACK = [
 ];
 
 const hardwarePhoto = require('../assets/hardware.webp');
-const PHOTO_ASPECT = 720 / 766;
+const PHOTO_ASPECT = 1600 / 720;
 const SHEET_MAX_WIDTH = 560;
 const SHEET_PADDING = 22;
 
@@ -39,7 +39,7 @@ export function About() {
   const version = Constants.expoConfig?.version;
   const close = () => setOpen(false);
   // Sized outright: given only a width, an image takes its file's height and stretches.
-  const photoWidth = Math.min(360, Math.min(screen.width - 2 * GUTTER, SHEET_MAX_WIDTH) - 2 * SHEET_PADDING - 2);
+  const photoWidth = Math.min(screen.width - 2 * GUTTER, SHEET_MAX_WIDTH) - 2 * SHEET_PADDING - 2;
 
   return (
     <>

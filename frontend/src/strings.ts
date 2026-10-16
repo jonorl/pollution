@@ -32,7 +32,7 @@ export const en = {
       },
     ],
     stack: 'Stack',
-    photo: 'The ESP32-S3 board on a breadboard, wired to the blue PMS5003 sensor by a ribbon cable.',
+    photo: 'The ESP32-S3 board on a breadboard, wired to the white DHT22 beside it and, by a ribbon cable, to the blue PMS5003. A power module at the end of the breadboard feeds it from a mains adapter.',
     source: 'Source code on GitHub',
   },
 
@@ -227,7 +227,7 @@ export const es: Strings = {
       },
     ],
     stack: 'Tecnologías',
-    photo: 'La placa ESP32-S3 en una protoboard, conectada al sensor PMS5003 azul con un cable plano.',
+    photo: 'La placa ESP32-S3 en una protoboard, conectada al DHT22 blanco de al lado y, con un cable plano, al PMS5003 azul. Un módulo de alimentación en el extremo de la protoboard la alimenta desde un adaptador de corriente.',
     source: 'Código fuente en GitHub',
   },
 

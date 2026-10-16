@@ -54,7 +54,7 @@ export function About() {
                 <dd>{section.body}</dd>
                 {section.id === 'hardware' && (
                   <dd>
-                    <img className="about-photo" src={hardwarePhoto} alt={text.photo} width={720} height={766} loading="lazy" />
+                    <img className="about-photo" src={hardwarePhoto} alt={text.photo} width={1600} height={720} loading="lazy" />
                   </dd>
                 )}
               </div>

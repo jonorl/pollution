@@ -11,8 +11,10 @@ export interface Reading {
   n2_5?: number | null;
   n5_0?: number | null;
   n10?: number | null;
-  /** °C from the board's TMP36; null on rows from before it was fitted. */
+  /** °C and % relative humidity from the DHT22; null when it failed to read. Before 16 Oct 2026
+   * temperatures came from a faulty TMP36 and there was no humidity. */
   temperature_c?: number | null;
+  humidity_pct?: number | null;
   createdAt: string;
 }
 
@@ -24,6 +26,8 @@ export interface Bin {
   pm10: number;
   /** Mean °C; null when nothing in the bucket had a temperature. */
   temp?: number | null;
+  /** Mean % relative humidity; null when nothing in the bucket had one. */
+  hum?: number | null;
   n: number;
 }
 
@@ -35,6 +39,8 @@ export interface DailyMean {
   pm10: number;
   /** Mean °C; null when nothing that day had a temperature. */
   temp?: number | null;
+  /** Mean % relative humidity; null when nothing that day had one. */
+  hum?: number | null;
   n: number;
 }
 

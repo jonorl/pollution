@@ -14,8 +14,9 @@ const ingestBodySchema = z.object({
   n2_5: z.number().int().nonnegative().optional(),
   n5_0: z.number().int().nonnegative().optional(),
   n10: z.number().int().nonnegative().optional(),
-  // The TMP36's rated range; anything outside it is a wiring fault, not weather.
-  temperature_c: z.number().min(-40).max(125).optional(),
+  // The DHT22's rated ranges; anything outside them is a wiring fault, not weather.
+  temperature_c: z.number().min(-40).max(80).optional(),
+  humidity_pct: z.number().min(0).max(100).optional(),
 });
 
 export const ingestRoute: FastifyPluginAsyncZod = async (app) => {

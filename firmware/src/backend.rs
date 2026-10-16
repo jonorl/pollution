@@ -6,6 +6,7 @@ use embedded_svc::io::Write;
 use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
 use serde::Serialize;
 
+use crate::dht22::Climate;
 use crate::pms5003::PmReading;
 
 #[derive(Serialize)]
@@ -22,9 +23,11 @@ struct IngestBody<'a> {
     n2_5: u16,
     n5_0: u16,
     n10: u16,
-    /// Mean over the minute, to 0.1 °C; left out entirely when the sensor gave nothing.
+    /// Means over the minute, to 0.1 °C and 0.1 %; left out entirely when the DHT22 gave nothing.
     #[serde(skip_serializing_if = "Option::is_none")]
     temperature_c: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    humidity_pct: Option<f32>,
 }
 
 /// POSTs one reading to the backend's /ingest route.
@@ -33,8 +36,9 @@ pub fn post_reading(
     api_key: &str,
     device_id: &str,
     reading: PmReading,
-    temperature_c: Option<f32>,
+    climate: Option<&Climate>,
 ) -> Result<()> {
+    let tenth = |v: f32| (v * 10.0).round() / 10.0;
     let body = serde_json::to_vec(&IngestBody {
         device_id,
         pm1_0: reading.pm1_0,
@@ -46,7 +50,8 @@ pub fn post_reading(
         n2_5: reading.counts[3],
         n5_0: reading.counts[4],
         n10: reading.counts[5],
-        temperature_c: temperature_c.map(|t| (t * 10.0).round() / 10.0),
+        temperature_c: climate.map(|c| tenth(c.celsius)),
+        humidity_pct: climate.map(|c| tenth(c.humidity)),
     })?;
 
     let connection = EspHttpConnection::new(&Configuration {

@@ -21,8 +21,10 @@ model Reading {
   n2_5          Int?
   n5_0          Int?
   n10           Int?
-  // °C from the board's TMP36; null on rows from before it was fitted or when it fails to read.
+  // °C and % relative humidity from the DHT22; null when it fails to read. Temperatures before
+  // 16 Oct 2026 came from a TMP36 that read low and erratically.
   temperature_c Float?
+  humidity_pct  Float?
   createdAt     DateTime @default(now())
 
   @@index([createdAt])

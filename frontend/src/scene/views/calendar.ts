@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import type { DailyMean } from '../../api';
 import { bandFor, WHO_GUIDELINE_24H } from '../../bands';
-import { dayKey, formatDay, formatMonth, formatNumber, formatValue, formatWeekday, startOfDay, temperatureLines } from '../../format';
+import { dayKey, formatDay, formatMonth, formatNumber, formatValue, formatWeekday, startOfDay, climateLines } from '../../format';
 import { tr } from '../../i18n';
 import { callout, clearGroup, floorPlane, guidelineSheet, label, Stage } from '../stage';
 import type { CreateView } from '../types';
@@ -180,7 +180,7 @@ export const createCalendar: CreateView = (container, onHover) => {
         ? [
             tr().scene.minutesRecorded(formatNumber(entry.n), formatNumber(MINUTES_PER_DAY)),
             `PM1.0 ${formatNumber(entry.pm1, 1)} · PM10 ${formatNumber(entry.pm10, 1)}`,
-            ...temperatureLines(entry.temp),
+            ...climateLines(entry.temp, entry.hum),
           ]
         : [tr().scene.noDay],
     });

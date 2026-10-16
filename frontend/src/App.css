@@ -474,12 +474,11 @@
   background: var(--band);
 }
 
+/* Wraps once temperature and humidity join the PM figures, as they don't fit the rail on one line. */
 .minor {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: auto;
-  justify-content: start;
-  gap: 0 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
 }
 
 .minor dt {

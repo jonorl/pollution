@@ -33,6 +33,7 @@ interface BinRow {
   pm25: number;
   pm10: number;
   temp: number | null;
+  hum: number | null;
   n: number;
 }
 
@@ -42,6 +43,7 @@ interface DayRow {
   pm25: number;
   pm10: number;
   temp: number | null;
+  hum: number | null;
   n: number;
 }
 
@@ -57,6 +59,7 @@ export const aggregatesRoute: FastifyPluginAsyncZod = async (app) => {
              avg("pm2_5")::float8 AS pm25,
              avg("pm10")::float8 AS pm10,
              avg("temperature_c")::float8 AS temp,
+             avg("humidity_pct")::float8 AS hum,
              count(*)::int AS n
       FROM "Reading"
       WHERE "createdAt" > (now() AT TIME ZONE 'UTC') - make_interval(days => ${days}::int)
@@ -74,6 +77,7 @@ export const aggregatesRoute: FastifyPluginAsyncZod = async (app) => {
              avg("pm2_5")::float8 AS pm25,
              avg("pm10")::float8 AS pm10,
              avg("temperature_c")::float8 AS temp,
+             avg("humidity_pct")::float8 AS hum,
              count(*)::int AS n
       FROM "Reading"
       WHERE "createdAt" > (now() AT TIME ZONE 'UTC') - make_interval(days => ${days}::int + 1)

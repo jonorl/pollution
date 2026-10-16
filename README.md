@@ -7,7 +7,7 @@ A home-built air-quality monitor. A laser particle sensor in my office in Kololo
 ## How it fits together
 
 ```
-PMS5003 + TMP36 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ──► PostgreSQL
+PMS5003 + DHT22 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ──► PostgreSQL
                      averages 1 min            (Docker, VPS)         │
                                                                      ▼
                      React + three.js dashboard ◄─┬─ polls every 30 s
@@ -26,7 +26,7 @@ PMS5003 + TMP36 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ─�
 ## Hardware
 
 - **Plantower PMS5003** laser particle sensor: PM1.0, PM2.5 and PM10 in µg/m³, plus particle counts per 0.1 L at 0.3, 0.5, 1, 2.5, 5 and 10 µm
-- **TMP36** analogue temperature sensor
+- **DHT22** (AM2302) digital temperature and humidity sensor, which replaced a TMP36 on 16 Oct 2026 after it started reading low and erratically
 - **ESP32-S3** board (YD-ESP32-S3 N16R8); its RGB LED glows in the dashboard's colour for the current WHO band
 
 | Part | ESP32-S3 pin |
@@ -34,15 +34,15 @@ PMS5003 + TMP36 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ─�
 | PMS5003 RXD | GPIO17 (UART1 TX) |
 | PMS5003 TXD | GPIO18 (UART1 RX) |
 | PMS5003 VCC / GND | 5 V / GND |
-| TMP36 output | GPIO10 (ADC1) |
-| TMP36 VCC / GND | 5 V / GND |
+| DHT22 data | GPIO10 |
+| DHT22 VCC / GND | 3.3 V / GND |
 | RGB LED | GPIO48 (on the board) |
 
-The PMS5003's fan needs a steady 5 V.
+The PMS5003's fan needs a steady 5 V. Power the DHT22 from 3.3 V: its data line is pulled up to its supply, and the ESP32's pins don't tolerate 5 V.
 
 ## Firmware
 
-Rust on ESP-IDF (`esp-idf-svc`). Every 5 seconds it reads a PMS5003 frame, dropping any that fail their checksum, and the temperature, averaging 32 ADC samples. Every 12 readings it posts the one-minute average to the API over HTTPS, checking the server's certificate against ESP-IDF's bundle of root authorities. It reconnects to Wi-Fi if the link drops.
+Rust on ESP-IDF (`esp-idf-svc`). Every 5 seconds it reads a PMS5003 frame, dropping any that fail their checksum, and the DHT22's temperature and humidity, which it times bit by bit with interrupts briefly off. Every 12 readings it posts the one-minute average to the API over HTTPS, checking the server's certificate against ESP-IDF's bundle of root authorities. It reconnects to Wi-Fi if the link drops.
 
 ```sh
 cd firmware

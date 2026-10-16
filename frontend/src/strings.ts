@@ -4,6 +4,7 @@
 export const en = {
   title: 'Air quality',
   language: 'Language',
+  percent: (value: string) => `${value}%`,
   place: 'Kololo, Kampala',
 
   about: {
@@ -17,12 +18,12 @@ export const en = {
       {
         id: 'hardware',
         heading: 'Hardware',
-        body: 'A Plantower PMS5003 laser sensor reports PM1.0, PM2.5 and PM10, and counts particles from 0.3 µm up. A TMP36 reads the temperature. Both are wired to an ESP32-S3 microcontroller, whose RGB LED glows in the same band colours as this page.',
+        body: 'A Plantower PMS5003 laser sensor reports PM1.0, PM2.5 and PM10, and counts particles from 0.3 µm up. A DHT22 measures the temperature and humidity. Both are wired to an ESP32-S3 microcontroller, whose RGB LED glows in the same band colours as this page.',
       },
       {
         id: 'device',
         heading: 'On the device',
-        body: 'Firmware written in Rust reads the sensor every 5 seconds, drops any reading that fails its checksum, and averages 12 of them into one a minute. Each temperature is the mean of 32 quick samples, to smooth out electrical noise.',
+        body: 'Firmware written in Rust reads the sensor every 5 seconds, drops any reading that fails its checksum, and averages 12 of them into one a minute. The DHT22 is read on the same beat, and its temperature and humidity are averaged over the minute too.',
       },
       {
         id: 'pipeline',
@@ -48,6 +49,7 @@ export const en = {
     heading: 'PM2.5 · latest 1-minute average',
     whoBand: 'WHO band',
     temperature: 'Temperature',
+    humidity: 'Humidity',
     loading: 'Fetching the last 24 hours…',
     empty: 'No readings yet. Power the sensor and its first 1-minute average appears here within about a minute.',
   },
@@ -58,6 +60,7 @@ export const en = {
     lowest: 'Lowest',
     recorded: 'Recorded',
     temperature: 'Temperature',
+    humidity: 'Humidity',
     at: (time: string) => `at ${time}`,
     ofMinutes: (total: string) => `of ${total} minutes`,
     empty: 'Nothing recorded in the last 24 hours.',
@@ -187,6 +190,7 @@ export const en = {
     minutesRecorded: (count: string, total: string) => `${count} of ${total} minutes recorded`,
     finePart: (percent: string) => `${percent}% of the PM10 is finer than 2.5 µm`,
     temperature: (value: string) => `Temperature ${value}`,
+    humidity: (value: string) => `Humidity ${value}`,
   },
 };
 
@@ -195,6 +199,7 @@ export type Strings = typeof en;
 export const es: Strings = {
   title: 'Calidad del aire',
   language: 'Idioma',
+  percent: (value) => `${value} %`,
   place: 'Kololo, Kampala',
 
   about: {
@@ -208,12 +213,12 @@ export const es: Strings = {
       {
         id: 'hardware',
         heading: 'Hardware',
-        body: 'Un sensor láser Plantower PMS5003 mide PM1.0, PM2.5 y PM10, y cuenta partículas desde 0,3 µm. Un TMP36 mide la temperatura. Los dos están conectados a un microcontrolador ESP32-S3, cuyo LED RGB se ilumina con los mismos colores de banda que esta página.',
+        body: 'Un sensor láser Plantower PMS5003 mide PM1.0, PM2.5 y PM10, y cuenta partículas desde 0,3 µm. Un DHT22 mide la temperatura y la humedad. Los dos están conectados a un microcontrolador ESP32-S3, cuyo LED RGB se ilumina con los mismos colores de banda que esta página.',
       },
       {
         id: 'device',
         heading: 'En el dispositivo',
-        body: 'El firmware, escrito en Rust, lee el sensor cada 5 segundos, descarta las lecturas con checksum inválido y promedia 12 en una por minuto. Cada temperatura es el promedio de 32 muestras rápidas, para suavizar el ruido eléctrico.',
+        body: 'El firmware, escrito en Rust, lee el sensor cada 5 segundos, descarta las lecturas con checksum inválido y promedia 12 en una por minuto. El DHT22 se lee al mismo ritmo, y su temperatura y humedad también se promedian por minuto.',
       },
       {
         id: 'pipeline',
@@ -239,6 +244,7 @@ export const es: Strings = {
     heading: 'PM2.5 · último promedio de 1 minuto',
     whoBand: 'Banda OMS',
     temperature: 'Temperatura',
+    humidity: 'Humedad',
     loading: 'Cargando las últimas 24 horas…',
     empty: 'Todavía no hay lecturas. Encendé el sensor y su primer promedio de 1 minuto aparece acá en alrededor de un minuto.',
   },
@@ -249,6 +255,7 @@ export const es: Strings = {
     lowest: 'Mínimo',
     recorded: 'Registrado',
     temperature: 'Temperatura',
+    humidity: 'Humedad',
     at: (time) => `a las ${time}`,
     ofMinutes: (total) => `de ${total} minutos`,
     empty: 'Nada registrado en las últimas 24 horas.',
@@ -377,5 +384,6 @@ export const es: Strings = {
     minutesRecorded: (count, total) => `${count} de ${total} minutos registrados`,
     finePart: (percent) => `El ${percent} % del PM10 es más fino que 2,5 µm`,
     temperature: (value) => `Temperatura ${value}`,
+    humidity: (value) => `Humedad ${value}`,
   },
 };

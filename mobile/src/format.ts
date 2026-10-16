@@ -34,9 +34,18 @@ export const formatNumber = (value: number, digits = 0) =>
 /** 21.5 °C, 21,5 °C */
 export const formatTemperature = (celsius: number) => `${formatNumber(celsius, 1)} °C`;
 
-/** A tooltip's temperature line, or none for readings from before the sensor was fitted. */
-export const temperatureLines = (celsius: number | null | undefined): string[] =>
-  celsius == null || Number.isNaN(celsius) ? [] : [tr().scene.temperature(formatTemperature(celsius))];
+/** 61%, 61 % */
+export const formatHumidity = (percent: number) => tr().percent(formatNumber(percent));
+
+const known = (value: number | null | undefined): value is number => value != null && !Number.isNaN(value);
+
+/** A tooltip's temperature and humidity on one line, or no line when the reading has neither. */
+export function climateLines(celsius: number | null | undefined, humidity: number | null | undefined): string[] {
+  const parts: string[] = [];
+  if (known(celsius)) parts.push(tr().scene.temperature(formatTemperature(celsius)));
+  if (known(humidity)) parts.push(tr().scene.humidity(formatHumidity(humidity)));
+  return parts.length > 0 ? [parts.join(' · ')] : [];
+}
 
 /** A value as written in prose: whole numbers without decimals, others to one place (37.5, 37,5). */
 export const formatValue = (value: number) => formatNumber(value, Number.isInteger(value) ? 0 : 1);

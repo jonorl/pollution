@@ -1,7 +1,7 @@
 mod backend;
+mod dht22;
 mod led;
 mod pms5003;
-mod temperature;
 mod wifi;
 
 use esp_idf_svc::eventloop::EspSystemEventLoop;
@@ -11,6 +11,7 @@ use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::{info, warn};
 
+use dht22::{Climate, Dht22};
 use pms5003::{PmReading, Pms5003};
 
 const SAMPLE_INTERVAL_MS: u32 = 5000;
@@ -29,9 +30,6 @@ pub struct Config {
     api_key: &'static str,
     #[default("esp32-01")]
     device_id: &'static str,
-    /// "lm35" or "tmp36": they look alike but read differently.
-    #[default("tmp36")]
-    temp_sensor: &'static str,
 }
 
 /// Running sums for one upload window.
@@ -43,8 +41,9 @@ struct Average {
     counts: [u32; 6],
     count: u32,
     // Kept apart from the PM sums because either sensor can fail without the other.
-    temp_sum: f32,
-    temp_count: u32,
+    celsius_sum: f32,
+    humidity_sum: f32,
+    climate_count: u32,
 }
 
 impl Average {
@@ -58,13 +57,14 @@ impl Average {
         self.count += 1;
     }
 
-    fn add_temp(&mut self, celsius: f32) {
-        self.temp_sum += celsius;
-        self.temp_count += 1;
+    fn add_climate(&mut self, c: &Climate) {
+        self.celsius_sum += c.celsius;
+        self.humidity_sum += c.humidity;
+        self.climate_count += 1;
     }
 
-    /// Rounded PM means and the mean temperature, or None if every PM read in the window failed.
-    fn take(&mut self) -> Option<(PmReading, Option<f32>)> {
+    /// Rounded PM means and the mean temperature and humidity, or None if every PM read in the window failed.
+    fn take(&mut self) -> Option<(PmReading, Option<Climate>)> {
         let n = std::mem::take(self);
         if n.count == 0 {
             return None;
@@ -76,8 +76,11 @@ impl Average {
             pm10: mean(n.pm10),
             counts: n.counts.map(mean),
         };
-        let temperature = (n.temp_count > 0).then(|| n.temp_sum / n.temp_count as f32);
-        Some((pm, temperature))
+        let climate = (n.climate_count > 0).then(|| Climate {
+            celsius: n.celsius_sum / n.climate_count as f32,
+            humidity: n.humidity_sum / n.climate_count as f32,
+        });
+        Some((pm, climate))
     }
 }
 
@@ -119,10 +122,9 @@ fn main() -> anyhow::Result<()> {
         .inspect_err(|e| warn!("Status LED unavailable: {e:#}"))
         .ok();
 
-    // LM35/TMP36 output on GPIO10 (ADC1). Optional like the LED: PM readings carry on without it.
-    let mut thermometer = temperature::Kind::from_config(app_config.temp_sensor)
-        .and_then(|kind| temperature::TempSensor::new(peripherals.adc1, peripherals.pins.gpio10, kind))
-        .inspect_err(|e| warn!("Temperature sensor unavailable: {e:#}"))
+    // DHT22 data on GPIO10. Optional like the LED: PM readings carry on without it.
+    let mut climate_sensor = Dht22::new(peripherals.pins.gpio10)
+        .inspect_err(|e| warn!("DHT22 unavailable: {e:#}"))
         .ok();
 
     let mut window = Average::default();
@@ -152,21 +154,22 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        if let Some(sensor) = thermometer.as_mut() {
+        if let Some(sensor) = climate_sensor.as_mut() {
             match sensor.read() {
-                Ok(t) => {
-                    info!("Temperature: {:.1} °C ({:.0} mV)", t.celsius, t.millivolts);
-                    window.add_temp(t.celsius);
+                Ok(c) => {
+                    info!("Temperature: {:.1} °C | humidity: {:.1} %", c.celsius, c.humidity);
+                    window.add_climate(&c);
                 }
-                Err(e) => warn!("Temperature read failed: {e:#}"),
+                // The odd failed read is normal for a DHT22; the minute's mean uses the rest.
+                Err(e) => warn!("DHT22 read failed: {e:#}"),
             }
         }
 
         ticks += 1;
         if ticks >= SAMPLES_PER_UPLOAD {
             ticks = 0;
-            if let Some((avg, temperature)) = window.take() {
-                upload(&mut esp_wifi, &app_config, avg, temperature);
+            if let Some((avg, climate)) = window.take() {
+                upload(&mut esp_wifi, &app_config, avg, climate);
             }
         }
 
@@ -176,18 +179,18 @@ fn main() -> anyhow::Result<()> {
 
 /// Failed uploads are logged and dropped: a missing minute on the chart is
 /// better than a backlog the device has no storage for.
-fn upload(wifi: &mut BlockingWifi<EspWifi<'static>>, config: &Config, avg: PmReading, temperature: Option<f32>) {
+fn upload(wifi: &mut BlockingWifi<EspWifi<'static>>, config: &Config, avg: PmReading, climate: Option<Climate>) {
     if let Err(e) = wifi::ensure_connected(wifi) {
         warn!("Skipping upload, WiFi down: {e:#}");
         return;
     }
-    match backend::post_reading(config.backend_url, config.api_key, config.device_id, avg, temperature) {
+    match backend::post_reading(config.backend_url, config.api_key, config.device_id, avg, climate.as_ref()) {
         Ok(()) => info!(
             "Uploaded 1-min average: PM1.0 {} | PM2.5 {} | PM10 {} | {}",
             avg.pm1_0,
             avg.pm2_5,
             avg.pm10,
-            temperature.map_or("no temperature".into(), |t| format!("{t:.1} °C"))
+            climate.map_or("no temperature or humidity".into(), |c| format!("{:.1} °C, {:.1} %", c.celsius, c.humidity))
         ),
         Err(e) => warn!("Upload failed: {e:#}"),
     }

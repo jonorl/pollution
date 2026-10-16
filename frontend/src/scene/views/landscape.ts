@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import type { Bin } from '../../api';
 import { bandFor, WHO_GUIDELINE_24H } from '../../bands';
-import { dayKey, formatNumber, formatShortDay, formatTime, formatValue, minuteOfDay, startOfDay, temperatureLines } from '../../format';
+import { dayKey, formatNumber, formatShortDay, formatTime, formatValue, minuteOfDay, startOfDay, climateLines } from '../../format';
 import { tr } from '../../i18n';
 import { callout, clearGroup, floorPlane, guidelineSheet, label, lineSegments, marker, Stage } from '../stage';
 import type { CreateView } from '../types';
@@ -27,6 +27,7 @@ interface Grid {
   pm1: Float32Array;
   pm10: Float32Array;
   temp: Float32Array;
+  hum: Float32Array;
 }
 
 function buildGrid(bins: readonly Bin[]): Grid {
@@ -51,6 +52,7 @@ function buildGrid(bins: readonly Bin[]): Grid {
     pm1: new Float32Array(size).fill(NaN),
     pm10: new Float32Array(size).fill(NaN),
     temp: new Float32Array(size).fill(NaN),
+    hum: new Float32Array(size).fill(NaN),
   };
   for (const bin of bins) {
     const time = new Date(bin.t);
@@ -61,6 +63,7 @@ function buildGrid(bins: readonly Bin[]): Grid {
     grid.pm1[i] = bin.pm1;
     grid.pm10[i] = bin.pm10;
     grid.temp[i] = bin.temp ?? NaN;
+    grid.hum[i] = bin.hum ?? NaN;
   }
   return grid;
 }
@@ -237,7 +240,7 @@ export const createLandscape: CreateView = (container, onHover) => {
       pm25: known ? pm25 : null,
       caption: tr().scene.fiveMinuteMean,
       details: known
-        ? [`PM1.0 ${formatNumber(grid.pm1[i], 1)} · PM10 ${formatNumber(grid.pm10[i], 1)}`, ...temperatureLines(grid.temp[i])]
+        ? [`PM1.0 ${formatNumber(grid.pm1[i], 1)} · PM10 ${formatNumber(grid.pm10[i], 1)}`, ...climateLines(grid.temp[i], grid.hum[i])]
         : [tr().scene.noFiveMinutes],
     });
   }, leave);

@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { About } from './About';
 import { fetchBins, fetchDaily, type Reading } from './api';
 import { BANDS, bandFor, WHO_GUIDELINE_24H } from './bands';
-import { formatNumber, formatTemperature, formatTime, formatValue } from './format';
+import { formatHumidity, formatNumber, formatTemperature, formatTime, formatValue } from './format';
 import { LANGS, setLang, tr, type Lang } from './i18n';
 import { panel } from './panelStyles';
 import type { ViewData } from './scene/types';
@@ -42,28 +42,34 @@ interface DayStats {
   peak: Reading;
   low: Reading;
   minutes: number;
-  /** Lowest and highest °C; null when no reading had a temperature. */
-  temperature: { min: number; max: number } | null;
+  /** Lowest and highest °C and % humidity; null when no reading had one. */
+  temperature: Range | null;
+  humidity: Range | null;
 }
+
+interface Range {
+  min: number;
+  max: number;
+}
+
+const widen = (range: Range | null, value: number | null | undefined): Range | null =>
+  value == null ? range : { min: Math.min(range?.min ?? value, value), max: Math.max(range?.max ?? value, value) };
 
 function summarise(readings: readonly Reading[]): DayStats | null {
   if (readings.length === 0) return null;
   let sum = 0;
   let peak = readings[0];
   let low = readings[0];
-  let temperature: DayStats['temperature'] = null;
+  let temperature: Range | null = null;
+  let humidity: Range | null = null;
   for (const reading of readings) {
     sum += reading.pm2_5;
     if (reading.pm2_5 > peak.pm2_5) peak = reading;
     if (reading.pm2_5 < low.pm2_5) low = reading;
-    const celsius = reading.temperature_c;
-    if (celsius != null) {
-      temperature = temperature
-        ? { min: Math.min(temperature.min, celsius), max: Math.max(temperature.max, celsius) }
-        : { min: celsius, max: celsius };
-    }
+    temperature = widen(temperature, reading.temperature_c);
+    humidity = widen(humidity, reading.humidity_pct);
   }
-  return { mean: sum / readings.length, peak, low, minutes: readings.length, temperature };
+  return { mean: sum / readings.length, peak, low, minutes: readings.length, temperature, humidity };
 }
 
 export function Dashboard({ initialLang, initialView }: { initialLang: Lang; initialView: ViewId }) {
@@ -315,6 +321,12 @@ function NowPanel({ latest, status }: { latest: Reading | null; status: FeedStat
                 <Text style={styles.minorUnit}>{' '}°C</Text>
               </Minor>
             )}
+            {latest.humidity_pct != null && (
+              <Minor term={text.now.humidity}>
+                {formatNumber(latest.humidity_pct)}
+                <Text style={styles.minorUnit}>{' '}%</Text>
+              </Minor>
+            )}
             <View>
               <Text style={styles.minorTerm}>{text.now.whoBand}</Text>
               <Text style={styles.minorText}>{text.bands[band.key].name}</Text>
@@ -382,6 +394,9 @@ function DayPanel({ stats, currentBand }: { stats: DayStats | null; currentBand:
                 term={day.temperature}
                 value={`${formatNumber(stats.temperature.min, 1)}–${formatTemperature(stats.temperature.max)}`}
               />
+            )}
+            {stats.humidity && (
+              <Fact term={day.humidity} value={`${formatNumber(stats.humidity.min)}–${formatHumidity(stats.humidity.max)}`} />
             )}
           </View>
         </>

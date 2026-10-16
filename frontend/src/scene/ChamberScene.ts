@@ -8,7 +8,7 @@ import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer
 
 import type { Reading } from '../api';
 import { BANDS, bandFor, WHO_GUIDELINE_24H } from '../bands';
-import { formatTime, formatValue, temperatureLines } from '../format';
+import { formatTime, formatValue, climateLines } from '../format';
 import { tr } from '../i18n';
 import { particleFragment, particleVertex, sheetFragment, sheetVertex } from './shaders';
 import type { CreateView, HoverInfo } from './types';
@@ -700,7 +700,7 @@ export class ChamberScene {
       pm25: reading?.pm2_5 ?? null,
       caption: tr().scene.minuteAverage,
       details: reading
-        ? [`PM1.0 ${reading.pm1_0} · PM10 ${reading.pm10}`, ...temperatureLines(reading.temperature_c)]
+        ? [`PM1.0 ${reading.pm1_0} · PM10 ${reading.pm10}`, ...climateLines(reading.temperature_c, reading.humidity_pct)]
         : [tr().scene.noMinute],
     });
   };

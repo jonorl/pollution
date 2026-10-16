@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import type { Reading } from '../api';
 import { BANDS, bandFor, WHO_GUIDELINE_24H } from '../bands';
-import { formatTime, formatValue, minuteOfDay, temperatureLines } from '../format';
+import { formatTime, formatValue, minuteOfDay, climateLines } from '../format';
 import { tr } from '../i18n';
 import type { Label } from './labels';
 import { particleFragment, particleVertex, sheetFragment, sheetVertex } from './shaders';
@@ -531,7 +531,7 @@ export class ChamberScene {
       pm25: reading?.pm2_5 ?? null,
       caption: tr().scene.minuteAverage,
       details: reading
-        ? [`PM1.0 ${reading.pm1_0} · PM10 ${reading.pm10}`, ...temperatureLines(reading.temperature_c)]
+        ? [`PM1.0 ${reading.pm1_0} · PM10 ${reading.pm10}`, ...climateLines(reading.temperature_c, reading.humidity_pct)]
         : [tr().scene.noMinute],
     });
   };

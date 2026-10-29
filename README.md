@@ -15,14 +15,29 @@ A home-built air-quality monitor. A laser particle sensor in my office in Kololo
 
 ## How it fits together
 
-```
-PMS5003 + DHT22 ──► ESP32-S3 (Rust) ──HTTPS──► Fastify API ──► PostgreSQL
-                     averages 1 min            (Docker, VPS)         │
-                                                                     ▼
-                     React + three.js dashboard ◄─┬─ polls every 30 s
-                     (Cloudflare Pages)           │
-                     React Native + three.js app ◄┘
-                     (Android, Expo)
+```mermaid
+flowchart LR
+    subgraph device["Office in Kololo, Kampala"]
+        sensors["PMS5003 particles<br/>DHT22 temperature, humidity"]
+        esp["ESP32-S3, Rust<br/>reads every 5 s<br/>averages 1 min"]
+        sensors -- "UART, one-wire" --> esp
+    end
+
+    subgraph vps["VPS, Docker"]
+        caddy["Caddy<br/>pollution.jonathan-orlowski.dev"]
+        api["Fastify API<br/>zod, Prisma, /health"]
+        db[("PostgreSQL<br/>one row a minute")]
+        caddy --> api --> db
+    end
+
+    subgraph clients["Viewers"]
+        web["React + three.js dashboard<br/>Cloudflare Pages<br/>jonathan-orlowski.dev/pollution/"]
+        app["React Native + three.js app<br/>Android, Expo"]
+    end
+
+    esp -- "HTTPS POST /ingest<br/>API key" --> caddy
+    web -- "polls every 30 s" --> caddy
+    app -- "polls every 30 s" --> caddy
 ```
 
 | Folder | What it is |

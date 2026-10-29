@@ -6,7 +6,7 @@ mod wifi;
 
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
-use esp_idf_svc::hal::peripherals::Peripherals;   // <-- was hal::prelude, now hal::peripherals
+use esp_idf_svc::hal::peripherals::Peripherals;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::{info, warn};
@@ -157,7 +157,10 @@ fn main() -> anyhow::Result<()> {
         if let Some(sensor) = climate_sensor.as_mut() {
             match sensor.read() {
                 Ok(c) => {
-                    info!("Temperature: {:.1} °C | humidity: {:.1} %", c.celsius, c.humidity);
+                    info!(
+                        "Temperature: {:.1} °C | humidity: {:.1} %",
+                        c.celsius, c.humidity
+                    );
                     window.add_climate(&c);
                 }
                 // The odd failed read is normal for a DHT22; the minute's mean uses the rest.
@@ -179,18 +182,32 @@ fn main() -> anyhow::Result<()> {
 
 /// Failed uploads are logged and dropped: a missing minute on the chart is
 /// better than a backlog the device has no storage for.
-fn upload(wifi: &mut BlockingWifi<EspWifi<'static>>, config: &Config, avg: PmReading, climate: Option<Climate>) {
+fn upload(
+    wifi: &mut BlockingWifi<EspWifi<'static>>,
+    config: &Config,
+    avg: PmReading,
+    climate: Option<Climate>,
+) {
     if let Err(e) = wifi::ensure_connected(wifi) {
         warn!("Skipping upload, WiFi down: {e:#}");
         return;
     }
-    match backend::post_reading(config.backend_url, config.api_key, config.device_id, avg, climate.as_ref()) {
+    match backend::post_reading(
+        config.backend_url,
+        config.api_key,
+        config.device_id,
+        avg,
+        climate.as_ref(),
+    ) {
         Ok(()) => info!(
             "Uploaded 1-min average: PM1.0 {} | PM2.5 {} | PM10 {} | {}",
             avg.pm1_0,
             avg.pm2_5,
             avg.pm10,
-            climate.map_or("no temperature or humidity".into(), |c| format!("{:.1} °C, {:.1} %", c.celsius, c.humidity))
+            climate.map_or("no temperature or humidity".into(), |c| format!(
+                "{:.1} °C, {:.1} %",
+                c.celsius, c.humidity
+            ))
         ),
         Err(e) => warn!("Upload failed: {e:#}"),
     }

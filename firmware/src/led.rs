@@ -30,7 +30,10 @@ const BANDS: [(f32, [u8; 3]); 6] = [
 /// The dashboard's colour for a PM2.5 reading in µg/m³.
 pub fn band_colour(pm2_5: u16) -> [u8; 3] {
     let value = pm2_5 as f32;
-    BANDS.iter().find(|(max, _)| value <= *max).map_or(BANDS[5].1, |(_, rgb)| *rgb)
+    BANDS
+        .iter()
+        .find(|(max, _)| value <= *max)
+        .map_or(BANDS[5].1, |(_, rgb)| *rgb)
 }
 
 /// The board's single WS2812 RGB LED.
@@ -42,7 +45,13 @@ pub struct StatusLed<'d> {
 
 impl<'d> StatusLed<'d> {
     pub fn new(pin: impl OutputPin + 'd) -> Result<Self> {
-        let channel = TxChannelDriver::new(pin, &TxChannelConfig { resolution: RESOLUTION, ..Default::default() })?;
+        let channel = TxChannelDriver::new(
+            pin,
+            &TxChannelConfig {
+                resolution: RESOLUTION,
+                ..Default::default()
+            },
+        )?;
         Ok(Self {
             channel,
             zero: Symbol::new_with(RESOLUTION, PinState::High, T0H, PinState::Low, T0L)?,
@@ -56,7 +65,11 @@ impl<'d> StatusLed<'d> {
         // decoding first keeps hues like teal from washing out to green.
         let channel = |c: u8| {
             let s = c as f32 / 255.0;
-            let linear = if s <= 0.04045 { s / 12.92 } else { ((s + 0.055) / 1.055).powf(2.4) };
+            let linear = if s <= 0.04045 {
+                s / 12.92
+            } else {
+                ((s + 0.055) / 1.055).powf(2.4)
+            };
             (linear * BRIGHTNESS * 255.0).round() as u8
         };
         let [r, g, b] = rgb.map(channel);
@@ -65,10 +78,15 @@ impl<'d> StatusLed<'d> {
         let mut symbols = Vec::with_capacity(24);
         for byte in [g, r, b] {
             for bit in (0..8).rev() {
-                symbols.push(if (byte >> bit) & 1 == 1 { self.one } else { self.zero });
+                symbols.push(if (byte >> bit) & 1 == 1 {
+                    self.one
+                } else {
+                    self.zero
+                });
             }
         }
-        self.channel.send_and_wait(CopyEncoder::new()?, &symbols, &TransmitConfig::default())?;
+        self.channel
+            .send_and_wait(CopyEncoder::new()?, &symbols, &TransmitConfig::default())?;
         Ok(())
     }
 

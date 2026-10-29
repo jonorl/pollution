@@ -70,10 +70,17 @@ impl<'d> Dht22<'d> {
         let humidity = u16::from_be_bytes([data[0], data[1]]) as f32 / 10.0;
         // Temperature is sign and magnitude, not two's complement: the top bit marks below zero.
         let magnitude = u16::from_be_bytes([data[2] & 0x7f, data[3]]) as f32 / 10.0;
-        let celsius = if data[2] & 0x80 != 0 { -magnitude } else { magnitude };
+        let celsius = if data[2] & 0x80 != 0 {
+            -magnitude
+        } else {
+            magnitude
+        };
 
         // An all-zero frame passes the checksum, and a loose wire can produce one.
-        if humidity == 0.0 && celsius == 0.0 || !(0.0..=100.0).contains(&humidity) || !(-40.0..=80.0).contains(&celsius) {
+        if humidity == 0.0 && celsius == 0.0
+            || !(0.0..=100.0).contains(&humidity)
+            || !(-40.0..=80.0).contains(&celsius)
+        {
             frame();
             bail!("DHT22 gave an impossible reading ({celsius:.1} °C, {humidity:.1} %)");
         }

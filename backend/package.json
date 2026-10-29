@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Fastify API that stores the air-quality readings and serves them, raw and averaged",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -13,9 +13,8 @@
     "test:coverage": "jest --coverage",
     "typecheck": "tsc -p tsconfig.test.json"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jonathan Orlowski",
+  "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.3.1",

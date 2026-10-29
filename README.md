@@ -129,6 +129,8 @@ npm run dev                    # uses the live API; set VITE_API_URL for another
 
 ## Mobile
 
+<img src="docs/mobile.png" alt="The Android app's breath view: particles drawn through a pair of lungs, above a PM2.5 reading of 39 µg/m³, well above WHO's guideline." width="260" align="right" />
+
 The same dashboard as an Android app, in React Native and Expo. The five views run the web's three.js scenes through expo-gl, with touch gestures in place of the mouse and React Native drawing the labels. It stops polling while it's in the background.
 
 **Download:** `pollution-<version>.apk` from the [latest release](https://github.com/jonorl/pollution/releases/latest). Open it on the phone to install; it needs Android 7 or later on an ARM phone, which is virtually every Android phone, and the phone asks once to allow installs from your browser. Releases up to v4 were signed with a debug key, so uninstall one of those before installing a newer release.

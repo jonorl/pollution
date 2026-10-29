@@ -26,7 +26,14 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 
 ENV NODE_ENV=production
+# The deploy passes the commit being built; /health reports it so the smoke test can tell the new container is live.
+ARG GIT_SHA=dev
+ENV GIT_SHA=$GIT_SHA
 EXPOSE 8084
+
+# Lets `docker ps` show whether the API can still reach its database. busybox wget ships with the alpine image.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT_POLLUTION:-3000}/health" > /dev/null || exit 1
 
 USER node
 

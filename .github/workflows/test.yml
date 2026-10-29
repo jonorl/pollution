@@ -1,0 +1,56 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Lets the deploy workflow run the tests before shipping.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [backend, frontend, mobile]
+    defaults:
+      run:
+        working-directory: ${{ matrix.package }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      # The backend's postinstall generates the Prisma client, and prisma.config.ts insists on a URL although
+      # generating never connects. The tests mock the database.
+      - name: Install
+        run: npm ci
+        env:
+          POLLUTION_DB_URL: postgresql://dummy:dummy@localhost:5432/dummy
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        if: matrix.package != 'backend'
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # Catches a dependency that no longer matches the Expo SDK, which only shows up as a native crash on a phone.
+      - name: Expo doctor
+        if: matrix.package == 'mobile'
+        run: npx expo-doctor

@@ -1,0 +1,99 @@
+version: 2
+
+# Minor and patch bumps arrive as one PR per app so the weekly run stays reviewable; majors come separately
+# because they are the ones that break things.
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Africa/Kampala
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+      # prisma, @prisma/client and @prisma/adapter-pg must stay on the same version.
+      prisma:
+        patterns: ["prisma", "@prisma/*"]
+    ignore:
+      # Types should match the Node that runs the code (22 in Docker and CI), not the newest release.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Jest 30's own Babel preset still requires Babel 7.
+      - dependency-name: "@babel/*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Africa/Kampala
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@babel/*"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint supports TypeScript below 6.1 only; lift this once it supports newer versions.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /mobile
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Africa/Kampala
+    groups:
+      mobile-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Each Expo SDK pins the versions of React, React Native and the native modules it was built against, so these
+      # move together with `npx expo install --fix` when the SDK is upgraded, never one by one.
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "expo-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@expo/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "jest-expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "eslint-config-expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native-async-storage/*"
+      - dependency-name: "@types/react"
+      - dependency-name: "typescript"
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@types/jest"
+        update-types: ["version-update:semver-major"]
+      # eslint-config-expo supports ESLint 9 only.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 5
+
+  # The esp-idf-* crates and the toolchain move together, so they come as one monthly PR.
+  - package-ecosystem: cargo
+    directory: /firmware
+    schedule:
+      interval: monthly
+    groups:
+      firmware:
+        patterns: ["*"]
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

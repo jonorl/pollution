@@ -7,8 +7,11 @@
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "prisma generate"
+    "test": "jest",
+    "postinstall": "prisma generate",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc -p tsconfig.test.json"
   },
   "keywords": [],
   "author": "",
@@ -26,8 +29,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
+    "@jest/globals": "^30.5.2",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "babel-jest": "^30.5.2",
+    "jest": "^30.5.2",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3"
   }

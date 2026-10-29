@@ -1,0 +1,13 @@
+# Cloudflare Pages applies these to every response, and the rename worker passes them on under
+# jonathan-orlowski.dev/pollution/. The CSP is report-only for now: browsers log what it would block in the console.
+# Once the console stays clean, rename the header to Content-Security-Policy to enforce it.
+/*
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://pollution.jonathan-orlowski.dev https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+# Built files carry a content hash in their name, so a changed file always gets a new name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

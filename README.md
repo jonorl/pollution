@@ -1,5 +1,12 @@
 # Pollution
 
+[![Test](https://github.com/jonorl/pollution/actions/workflows/test.yml/badge.svg)](https://github.com/jonorl/pollution/actions/workflows/test.yml)
+[![Build and Deploy Backend](https://github.com/jonorl/pollution/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/jonorl/pollution/actions/workflows/deploy-backend.yml)
+[![CodeQL](https://github.com/jonorl/pollution/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/jonorl/pollution/security/code-scanning)
+[![API status](https://img.shields.io/website?url=https%3A%2F%2Fpollution.jonathan-orlowski.dev%2Fhealth&label=api&up_message=healthy&down_message=down)](https://pollution.jonathan-orlowski.dev/health)
+[![Android release](https://img.shields.io/github/v/release/jonorl/pollution?label=android)](https://github.com/jonorl/pollution/releases/tag/Android)
+[![Licence](https://img.shields.io/github/license/jonorl/pollution)](LICENSE)
+
 A home-built air-quality monitor. A laser particle sensor in my office in Kololo, Kampala, Uganda, reports every minute to a small API, and a three.js dashboard draws the readings live, on the web and in an Android app.
 
 **Live:** https://jonathan-orlowski.dev/pollution/ · **Android app:** [download the APK](https://github.com/jonorl/pollution/releases/download/Android/pollution.apk)
@@ -64,6 +71,7 @@ Fastify 5, Prisma 7 and PostgreSQL, with zod-validated routes.
 | `GET /readings` | Raw minute readings, newest first; `since`, `limit`, `deviceId` |
 | `GET /readings/bins` | Means per 1–60 minute bucket over up to 31 days |
 | `GET /readings/daily` | Means per calendar day in a given time zone |
+| `GET /health` | `200` with the deployed commit when Postgres answers, `503` when it doesn't |
 
 The averaging is done in Postgres, so the dashboard downloads a few thousand rows rather than tens of thousands.
 
@@ -75,7 +83,7 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-**Deploying:** a push to `main` that touches `backend/` runs [`deploy-backend.yml`](.github/workflows/deploy-backend.yml). It builds the image, pushes it to `ghcr.io/jonorl/pollution-api` and restarts the container on the VPS, where Caddy serves it at `pollution.jonathan-orlowski.dev`. The service and its env vars live in my private infrastructure repo. Migrations aren't run by CI; after a deploy that adds one, run this on the VPS:
+**Deploying:** a push to `main` that touches `backend/` runs [`deploy-backend.yml`](.github/workflows/deploy-backend.yml). It runs the tests, builds the image, pushes it to `ghcr.io/jonorl/pollution-api` and restarts the container on the VPS, where Caddy serves it at `pollution.jonathan-orlowski.dev`. A smoke test then waits for `/health` to report the new commit and checks that `/ingest` still refuses requests without a key. The image's Docker `HEALTHCHECK` polls `/health` too. The service and its env vars live in my private infrastructure repo. Migrations aren't run by CI; after a deploy that adds one, run this on the VPS:
 
 ```sh
 docker compose -f ~/my-VPS/projects/docker-compose.yml run --rm pollution-api npx prisma migrate deploy
@@ -100,6 +108,8 @@ npm run dev                    # uses the live API; set VITE_API_URL for another
 ```
 
 **Deploying:** Cloudflare Pages builds `frontend/` on every push to `main`, and a Worker serves it under `jonathan-orlowski.dev/pollution/`.
+
+**Security headers:** [`frontend/public/_headers`](frontend/public/_headers) sets a Content-Security-Policy (scripts only from the site, Google Analytics and Cloudflare's analytics; no inline scripts; connections only to the API and analytics), `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy`. The CSP is in report-only mode while it's being verified.
 
 ## Mobile
 
@@ -126,3 +136,25 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 Without the upload key that APK is signed with the debug key, so uninstall it before installing a release from GitHub.
 
 **Releasing:** pushing a `mobile-v*` tag runs [`release-android.yml`](.github/workflows/release-android.yml), which builds a signed APK and attaches it to a GitHub release. [`mobile/README.md`](mobile/README.md) covers the signing key and local builds.
+
+## Testing and CI
+
+Each app has its own Jest suite:
+
+| Folder | What's tested |
+| --- | --- |
+| `backend/` | Every route through Fastify's `inject`, with Prisma mocked: ingest auth and validation, query limits, `/health` and its cache |
+| `frontend/` | WHO bands, breath counts and lung damage, locale formatting, the polling hook |
+| `mobile/` | The app's copies of the bands and size classes against the web's and the firmware's LED colours, and its breath maths |
+
+```sh
+cd backend    # or frontend, mobile
+npm test
+npm run typecheck
+```
+
+[`test.yml`](.github/workflows/test.yml) runs the type check, lint and tests for all three on every push and pull request. `main` is protected: changes go through a pull request, and the three test jobs and CodeQL must pass. Dependabot opens grouped updates weekly for npm and monthly for the firmware's crates and the Actions.
+
+## Licence
+
+Developed by [Jonathan Orlowski](https://jonathan-orlowski.dev/). Licensed under the Apache License 2.0, see [`LICENSE`](LICENSE).

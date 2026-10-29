@@ -55,11 +55,12 @@ Rust on ESP-IDF (`esp-idf-svc`). Every 5 seconds it reads a PMS5003 frame, dropp
 
 ```sh
 cd firmware
+rustup override set esp        # once per clone; see below
 cp cfg.toml.example cfg.toml   # Wi-Fi, API URL and key; gitignored
 cargo run --release            # builds, flashes with espflash and opens the monitor
 ```
 
-Needs the `esp` Rust toolchain ([espup](https://github.com/esp-rs/espup)), `ldproxy` and `espflash`.
+Needs the `esp` Rust toolchain ([espup](https://github.com/esp-rs/espup)), `ldproxy` and `espflash`. The toolchain is picked with `rustup override` rather than a `rust-toolchain.toml`, because Dependabot can't install `esp` and fails on that file.
 
 ## Backend
 
@@ -153,7 +154,7 @@ npm test
 npm run typecheck
 ```
 
-[`test.yml`](.github/workflows/test.yml) runs the type check, lint and tests for all three on every push and pull request. `main` is protected: changes go through a pull request, and the three test jobs and CodeQL must pass. Dependabot opens grouped updates weekly for npm and monthly for the firmware's crates and the Actions.
+[`test.yml`](.github/workflows/test.yml) runs the type check, lint and tests for all three on every push and pull request. `main` is protected: changes go through a pull request, and the three test jobs and CodeQL must pass. Dependabot opens grouped updates weekly for npm and monthly for the firmware's crates and the Actions. Nothing tests the firmware in CI, so flash a crate update to the board before merging it.
 
 ## Licence
 

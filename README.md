@@ -4,12 +4,12 @@
 [![Build and Deploy Backend](https://github.com/jonorl/pollution/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/jonorl/pollution/actions/workflows/deploy-backend.yml)
 [![CodeQL](https://github.com/jonorl/pollution/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/jonorl/pollution/security/code-scanning)
 [![API status](https://img.shields.io/website?url=https%3A%2F%2Fpollution.jonathan-orlowski.dev%2Fhealth&label=api&up_message=healthy&down_message=down)](https://pollution.jonathan-orlowski.dev/health)
-[![Android release](https://img.shields.io/github/v/release/jonorl/pollution?label=android)](https://github.com/jonorl/pollution/releases/tag/Android)
+[![Android release](https://img.shields.io/github/v/release/jonorl/pollution?label=android)](https://github.com/jonorl/pollution/releases/latest)
 [![Licence](https://img.shields.io/github/license/jonorl/pollution)](LICENSE)
 
 A home-built air-quality monitor. A laser particle sensor in my office in Kololo, Kampala, Uganda, reports every minute to a small API, and a three.js dashboard draws the readings live, on the web and in an Android app.
 
-**Live:** https://jonathan-orlowski.dev/pollution/ · **Android app:** [download the APK](https://github.com/jonorl/pollution/releases/download/Android/pollution.apk)
+**Live:** https://jonathan-orlowski.dev/pollution/ · **Android app:** [download the APK](https://github.com/jonorl/pollution/releases/latest)
 
 ![The dashboard cycling through its five views: the clock, breath, landscape, size mix and calendar](docs/demo.gif)
 
@@ -116,7 +116,7 @@ npm run dev                    # uses the live API; set VITE_API_URL for another
 
 The same dashboard as an Android app, in React Native and Expo. The five views run the web's three.js scenes through expo-gl, with touch gestures in place of the mouse and React Native drawing the labels. It stops polling while it's in the background.
 
-**Download:** [`pollution.apk`](https://github.com/jonorl/pollution/releases/download/Android/pollution.apk) (35 MB), from the [Android release](https://github.com/jonorl/pollution/releases/tag/Android). Open it on the phone to install; it needs Android 7 or later and a 64-bit phone, and the phone asks once to allow installs from your browser.
+**Download:** `pollution-<version>.apk` from the [latest release](https://github.com/jonorl/pollution/releases/latest). Open it on the phone to install; it needs Android 7 or later on an ARM phone, which is virtually every Android phone, and the phone asks once to allow installs from your browser. Releases up to v4 were signed with a debug key, so uninstall one of those before installing a newer release.
 
 ```sh
 cd mobile
@@ -136,7 +136,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 Without the upload key that APK is signed with the debug key, so uninstall it before installing a release from GitHub.
 
-**Releasing:** pushing a `mobile-v*` tag runs [`release-android.yml`](.github/workflows/release-android.yml), which builds a signed APK and attaches it to a GitHub release. [`mobile/README.md`](mobile/README.md) covers the signing key and local builds.
+**Releasing:** pushing a `mobile-v*` tag runs [`release-android.yml`](.github/workflows/release-android.yml), which builds a signed APK and attaches it to a GitHub release. Running the workflow by hand from the Actions tab builds the same APK and keeps it as a workflow artifact for 14 days instead. [`mobile/README.md`](mobile/README.md) covers the signing key and local builds.
 
 ## Testing and CI
 

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
-/** The web's label classes (scene-label--now and so on); SceneLabels styles each. */
-export type LabelVariant = 'plain' | 'now' | 'guide' | 'strong' | 'who' | 'callout';
+/** The web's label classes (scene-label--now and so on, and scene-count); SceneLabels styles each. */
+export type LabelVariant = 'plain' | 'now' | 'guide' | 'strong' | 'who' | 'callout' | 'count';
 
 /**
  * A text tag pinned to a point in the scene. There is no DOM here for three's CSS2DRenderer, so
@@ -11,13 +11,16 @@ export type LabelVariant = 'plain' | 'now' | 'guide' | 'strong' | 'who' | 'callo
 export class Label extends THREE.Object3D {
   readonly text: string;
   readonly variant: LabelVariant;
+  /** A smaller line under the text, for counts. */
+  readonly detail: string | undefined;
   /** For views that fade labels on the far side of the scene. */
   opacity = 1;
 
-  constructor(text: string, variant: LabelVariant = 'plain') {
+  constructor(text: string, variant: LabelVariant = 'plain', detail?: string) {
     super();
     this.text = text;
     this.variant = variant;
+    this.detail = detail;
   }
 }
 
@@ -26,6 +29,7 @@ export interface LabelSpec {
   id: number;
   text: string;
   variant: LabelVariant;
+  detail?: string;
 }
 
 /** Each label on screen this frame, by id: its centre in dp from the view's top left, and opacity. */

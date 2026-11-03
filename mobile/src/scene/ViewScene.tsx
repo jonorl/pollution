@@ -167,6 +167,19 @@ function SceneLabel({ spec, frame }: { spec: LabelSpec; frame: SharedValue<Label
     return { opacity: at[2], transform: [{ translateX: at[0] }, { translateY: at[1] }] };
   });
 
+  if (variant === 'count') {
+    return (
+      <Animated.View style={[styles.anchor, position]}>
+        <View style={[styles.labelBox, styles.countBox]}>
+          <Text numberOfLines={1} style={[styles.countNumber, { color: band, textShadowColor: withAlpha(band, 0.45) }]}>
+            {spec.text}
+          </Text>
+          <Text numberOfLines={1} style={[styles.label, styles.countCaption]}>{spec.detail}</Text>
+        </View>
+      </Animated.View>
+    );
+  }
+
   return (
     <Animated.View style={[styles.anchor, position]}>
       <View style={styles.labelBox}>
@@ -250,6 +263,8 @@ const VARIANTS: Record<LabelVariant, TextStyle> = {
     letterSpacing: 0,
     color: colours.fg,
   },
+  // Drawn by its own branch in SceneLabel.
+  count: {},
 };
 
 const styles = StyleSheet.create({
@@ -292,6 +307,27 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  countBox: {
+    top: -30,
+    height: 60,
+    gap: 3,
+  },
+  // The web's .scene-count.
+  countNumber: {
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 26,
+    fontVariant: ['tabular-nums'],
+    textShadowRadius: 18,
+    textShadowOffset: { width: 0, height: 0 },
+  },
+  countCaption: {
+    fontSize: 10.5,
+    color: 'rgba(214, 230, 255, 0.72)',
+    textShadowColor: colours.bg,
+    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: 0 },
   },
   label: {
     fontFamily: fonts.monoMedium,

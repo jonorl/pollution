@@ -7,9 +7,10 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** Where the lungs stop at the top; the breathing group expands downwards from here. */
 export const APEX_Y = 4.2;
-export const TRACHEA_TOP_Y = 5.9;
+/** The top of the windpipe, in the neck, where it meets the throat. */
+export const TRACHEA_TOP_Y = 7.9;
 
-const CARINA = new THREE.Vector3(0, 2.3, -0.35);
+export const CARINA = new THREE.Vector3(0, 2.3, -0.35);
 const TRACHEA_RADIUS = 0.3;
 const BRONCHUS_RADIUS = 0.2;
 

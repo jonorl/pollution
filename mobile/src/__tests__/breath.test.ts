@@ -1,5 +1,5 @@
 import type { Reading } from '../api';
-import { breathCounts, lungDamage, MAX_DOTS, particlesPerDot } from '../breath';
+import { breathCounts, depositedPerBreath, depositedPerDay, lungDamage, MAX_DOTS, particlesPerDot, particlesPerSpeck } from '../breath';
 
 const reading = (overrides: Partial<Reading> = {}): Reading => ({
   id: 1,
@@ -23,9 +23,13 @@ describe('breathCounts', () => {
 });
 
 describe('particlesPerDot', () => {
+  it('keeps a fixed rate while the dots fit, so cleaner air draws fewer', () => {
+    expect(particlesPerDot(100)).toBe(20);
+    expect(particlesPerDot(MAX_DOTS * 20)).toBe(20);
+  });
+
   it("keeps within the web's phone budget", () => {
-    expect(particlesPerDot(MAX_DOTS)).toBe(1);
-    expect(particlesPerDot(MAX_DOTS + 1)).toBe(2);
+    expect(particlesPerDot(MAX_DOTS * 20 + 1)).toBe(21);
   });
 });
 
@@ -34,5 +38,26 @@ describe('lungDamage', () => {
     expect(lungDamage(5)).toBe(0);
     expect(lungDamage(37.5)).toBeCloseTo(0.5);
     expect(lungDamage(110)).toBe(1);
+  });
+});
+
+describe('deposition', () => {
+  it('settles most coarse particles and a fifth of fine ones', () => {
+    const counts = { total: 1000, shares: [0.5, 0.2, 0.1, 0.02, 0], measured: true };
+    expect(depositedPerBreath(counts)).toBeCloseTo(100 * 0.9 + 900 * 0.2);
+  });
+
+  it('scales the mean breath up to a day of 12 breaths a minute', () => {
+    const rows = [reading({ n0_3: 100, n2_5: 0 }), reading({ id: 2, n0_3: 300, n2_5: 0 })];
+    // 500 and 1500 particles a breath; a fifth settle; 17,280 breaths.
+    expect(depositedPerDay(rows)).toBeCloseTo(200 * 17280);
+  });
+
+  it('has nothing to say without readings', () => {
+    expect(depositedPerDay([])).toBeNull();
+  });
+
+  it('counts a day in far larger specks than a breath', () => {
+    expect(particlesPerSpeck(1000)).toBe(20000);
   });
 });

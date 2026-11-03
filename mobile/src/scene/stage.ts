@@ -246,7 +246,7 @@ export class Stage implements SceneInput {
     collectLabels(this.scene, labels);
     if (labels.length !== this.labels.length || labels.some((label, i) => label !== this.labels[i])) {
       this.labels = labels;
-      this.host.onLabels(labels.map((label) => ({ id: label.id, text: label.text, variant: label.variant })));
+      this.host.onLabels(labels.map((label) => ({ id: label.id, text: label.text, variant: label.variant, detail: label.detail })));
     }
 
     const frame: Record<number, [number, number, number]> = {};

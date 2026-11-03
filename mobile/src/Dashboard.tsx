@@ -148,6 +148,7 @@ export function Dashboard({ initialLang, initialView }: { initialLang: Lang; ini
           <NowPanel latest={latest} status={status} />
           <ViewNotes
             view={viewId}
+            readings={readings}
             latest={latest}
             dayMean={stats?.mean ?? null}
             failed={(view.needsBins && bins.failed) || (view.needsDaily && daily.failed) || false}

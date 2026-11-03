@@ -31,6 +31,14 @@ export const formatWeekday = (date: Date) => dateFormat({ weekday: 'short' }).fo
 export const formatNumber = (value: number, digits = 0) =>
   value.toLocaleString(getLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
+/** 3,200 in full; 11.3 million, 11,3 millones once it runs to millions. Spelt out rather than
+ * left to Intl's compact notation, which Hermes doesn't support everywhere. */
+export function formatCount(value: number): string {
+  if (value < 1e6) return formatNumber(value);
+  const millions = value / 1e6;
+  return tr().millions(formatNumber(millions, millions < 10 ? 2 : millions < 100 ? 1 : 0));
+}
+
 /** 21.5 °C, 21,5 °C */
 export const formatTemperature = (celsius: number) => `${formatNumber(celsius, 1)} °C`;
 

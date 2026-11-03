@@ -2,6 +2,12 @@ import type { Reading } from './api';
 
 /** One relaxed breath. */
 export const BREATH_LITRES = 0.5;
+/** Breaths a minute at rest, matching the view's 5-second breath. */
+export const BREATHS_PER_MINUTE = 12;
+// Shares of inhaled particles that settle rather than being breathed out again, roughly as in
+// ICRP's lung model for a resting adult breathing through the nose: most of those of 2.5 µm and
+// up, which strike the airway walls, and about a fifth of the finer ones.
+export const DEPOSITION = { fine: 0.2, coarse: 0.9 };
 // The sensor counts particles in 0.1 L samples.
 const SAMPLE_LITRES = 0.1;
 // Rough particles ≥0.3 µm per 0.1 L for each µg/m³ of PM2.5. Only used for rows from before
@@ -14,11 +20,20 @@ const TYPICAL_SHARES = [0.3, 0.055, 0.006, 0.0018, 0.0004];
 export const SIZE_THRESHOLDS = ['0.5', '1', '2.5', '5', '10'] as const;
 
 /** Most dots the breath view draws: the web's budget for phones. */
-export const MAX_DOTS = 24000;
+export const MAX_DOTS = 12000;
+// A fixed rate until the dots run out, so clean air shows a few hundred and dirty air a swarm.
+const PARTICLES_PER_DOT = 20;
+// Settled specks are counted over a day, so each stands for far more.
+const PARTICLES_PER_SPECK = 20000;
 
-/** How many particles each dot stands for once a breath holds more than can be drawn. */
-export function particlesPerDot(total: number): number {
-  return Math.max(1, Math.ceil(total / MAX_DOTS));
+/** How many particles each dot stands for. */
+export function particlesPerDot(total: number, rate = PARTICLES_PER_DOT): number {
+  return Math.max(rate, Math.ceil(total / MAX_DOTS));
+}
+
+/** How many particles each settled speck in the lungs stands for. */
+export function particlesPerSpeck(total: number): number {
+  return particlesPerDot(total, PARTICLES_PER_SPECK);
 }
 
 export interface BreathCounts {
@@ -69,4 +84,24 @@ export function lungDamage(pm25: number): number {
 export function meanPm25(readings: readonly Reading[]): number | null {
   if (readings.length === 0) return null;
   return readings.reduce((sum, r) => sum + r.pm2_5, 0) / readings.length;
+}
+
+/** Particles from one breath that settle in the airways and lungs. */
+export function depositedPerBreath(counts: BreathCounts): number {
+  const coarse = counts.shares[2];
+  return counts.total * (coarse * DEPOSITION.coarse + (1 - coarse) * DEPOSITION.fine);
+}
+
+/** Particles settling in a day of resting breaths of air like these readings; null with none. */
+export function depositedPerDay(readings: readonly Reading[]): number | null {
+  let sum = 0;
+  let count = 0;
+  for (const reading of readings) {
+    const counts = breathCounts(reading);
+    if (!counts) continue;
+    sum += depositedPerBreath(counts);
+    count++;
+  }
+  // Averaged over the minutes recorded, so gaps in the feed don't read as clean air.
+  return count === 0 ? null : (sum / count) * BREATHS_PER_MINUTE * 60 * 24;
 }

@@ -606,7 +606,7 @@ export const createBreath: CreateView = (container) => {
     specks.uCount.value += (speckTarget - specks.uCount.value) * (1 - Math.exp(-dt * 0.3));
     const d = (damage.uDamage.value += (damageTarget - damage.uDamage.value) * (1 - Math.exp(-dt * 0.8)));
     tint.value.lerpColors(healthy, dulled, d);
-    figureTint.value.lerpColors(glass, dayColour, 0.45 * d);
+    figureTint.value.lerpColors(glass, dayColour, 0.25 * d);
     haze.value = 0.012 + 0.05 * d;
 
     phase = (phase + step / THREE.MathUtils.lerp(BREATH_S, QUICKEST_BREATH_S, d)) % 1;

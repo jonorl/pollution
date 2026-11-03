@@ -158,6 +158,25 @@
   color: #9bd8ff;
 }
 
+.scene-count {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  font: 500 10.5px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: rgba(214, 230, 255, 0.72);
+  white-space: nowrap;
+  text-shadow: 0 0 8px #05070b;
+}
+
+.scene-count strong {
+  font: 800 26px/0.9 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--band);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--band) 45%, transparent);
+}
+
 .scene-callout {
   padding: 4px 8px;
   border: 1px solid var(--line);
@@ -676,6 +695,11 @@
   font-variant-numeric: tabular-nums;
   color: var(--band);
   text-shadow: 0 0 36px color-mix(in srgb, var(--band) 30%, transparent);
+}
+
+.breath-count--day {
+  margin-top: 14px;
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
 }
 
 .breath-caption {

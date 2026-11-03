@@ -31,6 +31,12 @@ export const formatWeekday = (date: Date) => dateFormat({ weekday: 'short' }).fo
 export const formatNumber = (value: number, digits = 0) =>
   value.toLocaleString(getLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
+/** 3,200 in full; 34 million, 34 millones once it runs to millions. */
+export const formatCount = (value: number) =>
+  value < 1e6
+    ? formatNumber(value)
+    : value.toLocaleString(getLocale(), { notation: 'compact', compactDisplay: 'long', maximumSignificantDigits: 3 });
+
 /** 21.5 °C, 21,5 °C */
 export const formatTemperature = (celsius: number) => `${formatNumber(celsius, 1)} °C`;
 

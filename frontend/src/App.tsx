@@ -139,6 +139,7 @@ export default function App() {
         <NowPanel latest={latest} status={status} />
         <ViewNotes
           view={viewId}
+          readings={readings}
           latest={latest}
           dayMean={stats?.mean ?? null}
           coarsePointer={coarsePointer}

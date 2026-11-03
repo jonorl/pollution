@@ -1,15 +1,17 @@
-import type { CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 import type { Reading } from './api';
 import { bandFor, WHO_GUIDELINE_24H } from './bands';
-import { breathCounts, particlesPerDot, SIZE_THRESHOLDS } from './breath';
-import { formatNumber, formatValue } from './format';
+import { breathCounts, depositedPerDay, particlesPerDot, particlesPerSpeck, SIZE_THRESHOLDS } from './breath';
+import { formatCount, formatNumber, formatValue } from './format';
 import { tr } from './i18n';
 import { SIZE_CLASSES } from './sizes';
 import type { ViewId } from './views';
 
 interface ViewNotesProps {
   view: ViewId;
+  /** The last 24 hours, oldest first. */
+  readings: readonly Reading[];
   latest: Reading | null;
   /** Mean PM2.5 over the last 24 hours, which sets how the breath view draws the lungs. */
   dayMean: number | null;
@@ -29,12 +31,12 @@ function Guideline() {
   );
 }
 
-export function ViewNotes({ view, latest, dayMean, coarsePointer, failed }: ViewNotesProps) {
+export function ViewNotes({ view, readings, latest, dayMean, coarsePointer, failed }: ViewNotesProps) {
   const notes = tr().notes;
 
   switch (view) {
     case 'breath':
-      return <BreathNotes latest={latest} dayMean={dayMean} coarsePointer={coarsePointer} />;
+      return <BreathNotes readings={readings} latest={latest} dayMean={dayMean} coarsePointer={coarsePointer} />;
 
     case 'landscape':
       return (
@@ -89,10 +91,18 @@ export function ViewNotes({ view, latest, dayMean, coarsePointer, failed }: View
   }
 }
 
-function BreathNotes({ latest, dayMean, coarsePointer }: { latest: Reading | null; dayMean: number | null; coarsePointer: boolean }) {
+interface BreathNotesProps {
+  readings: readonly Reading[];
+  latest: Reading | null;
+  dayMean: number | null;
+  coarsePointer: boolean;
+}
+
+function BreathNotes({ readings, latest, dayMean, coarsePointer }: BreathNotesProps) {
   const text = tr().notes.breath;
   const counts = breathCounts(latest);
   const perDot = counts ? particlesPerDot(counts.total, coarsePointer) : 1;
+  const day = useMemo(() => depositedPerDay(readings), [readings]);
 
   return (
     <section className="panel panel--notes" aria-labelledby="notes-heading">
@@ -109,11 +119,18 @@ function BreathNotes({ latest, dayMean, coarsePointer }: { latest: Reading | nul
               </div>
             ))}
           </dl>
+          {day !== null && (
+            <>
+              <p className="breath-count breath-count--day">{formatCount(day)}</p>
+              <p className="breath-caption">{text.settled}</p>
+            </>
+          )}
           <p>{text.lodge}</p>
           {dayMean !== null && <p>{text.lungs(formatValue(dayMean))} {text.stages[bandFor(dayMean).key]}</p>}
           <p className="foot">
             {counts.measured ? text.measured : text.estimated}{' '}
-            {perDot > 1 ? text.perDot(formatNumber(perDot)) : text.oneDot}
+            {text.perDot(formatNumber(perDot))}
+            {day !== null && <> {text.perSpeck(formatNumber(particlesPerSpeck(day, coarsePointer)))} {text.clearance}</>}
             {dayMean !== null && <> {text.lungsFoot}</>}
           </p>
         </>

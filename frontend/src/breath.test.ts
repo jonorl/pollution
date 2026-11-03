@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import type { Reading } from './api';
-import { breathCounts, lungDamage, meanPm25, particlesPerDot, MAX_DOTS } from './breath';
+import { breathCounts, depositedPerBreath, depositedPerDay, lungDamage, meanPm25, particlesPerDot, particlesPerSpeck, MAX_DOTS } from './breath';
 
 const reading = (overrides: Partial<Reading> = {}): Reading => ({
   id: 1,
@@ -34,13 +34,13 @@ describe('breathCounts', () => {
 });
 
 describe('particlesPerDot', () => {
-  it('draws one dot per particle while they fit', () => {
-    expect(particlesPerDot(100, false)).toBe(1);
+  it('keeps a fixed rate while the dots fit, so cleaner air draws fewer', () => {
+    expect(particlesPerDot(100, false)).toBe(20);
+    expect(particlesPerDot(MAX_DOTS.fine * 20, false)).toBe(20);
   });
 
   it('gives phones a smaller budget', () => {
-    expect(particlesPerDot(MAX_DOTS.fine, false)).toBe(1);
-    expect(particlesPerDot(MAX_DOTS.fine, true)).toBe(Math.ceil(MAX_DOTS.fine / MAX_DOTS.coarse));
+    expect(particlesPerDot(MAX_DOTS.fine * 20, true)).toBe(Math.ceil((MAX_DOTS.fine * 20) / MAX_DOTS.coarse));
   });
 });
 
@@ -74,5 +74,26 @@ describe('meanPm25', () => {
 
   it('is null with no readings', () => {
     expect(meanPm25([])).toBeNull();
+  });
+});
+
+describe('deposition', () => {
+  it('settles most coarse particles and a fifth of fine ones', () => {
+    const counts = { total: 1000, shares: [0.5, 0.2, 0.1, 0.02, 0], measured: true };
+    expect(depositedPerBreath(counts)).toBeCloseTo(100 * 0.9 + 900 * 0.2);
+  });
+
+  it('scales the mean breath up to a day of 12 breaths a minute', () => {
+    const rows = [reading({ n0_3: 100, n2_5: 0 }), reading({ id: 2, n0_3: 300, n2_5: 0 })];
+    // 500 and 1500 particles a breath; a fifth settle; 17,280 breaths.
+    expect(depositedPerDay(rows)).toBeCloseTo(200 * 17280);
+  });
+
+  it('has nothing to say without readings', () => {
+    expect(depositedPerDay([])).toBeNull();
+  });
+
+  it('counts a day in far larger specks than a breath', () => {
+    expect(particlesPerSpeck(1000, false)).toBe(20000);
   });
 });

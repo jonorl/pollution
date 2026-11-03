@@ -15,10 +15,28 @@ export interface Feed {
   checkedAt: number;
 }
 
+// Dev only: `?pm=60` swaps the feed for a steady day at that PM2.5, to preview each band.
+const PREVIEW_PM = import.meta.env.DEV ? Number(new URLSearchParams(window.location.search).get('pm')) || null : null;
+
+function previewFeed(pm25: number): Feed {
+  const now = Date.now();
+  const readings = Array.from({ length: 24 * 60 }, (_, i): Reading => ({
+    id: i,
+    deviceId: 'preview',
+    pm1_0: pm25 * 0.7,
+    pm2_5: pm25,
+    pm10: pm25 * 1.3,
+    createdAt: new Date(now - (24 * 60 - 1 - i) * 60_000).toISOString(),
+  }));
+  return { readings, status: 'ok', checkedAt: now };
+}
+
 export function useReadings(): Feed {
-  const [feed, setFeed] = useState<Feed>({ readings: [], status: 'loading', checkedAt: 0 });
+  const [feed, setFeed] = useState<Feed>(() =>
+    PREVIEW_PM !== null ? previewFeed(PREVIEW_PM) : { readings: [], status: 'loading', checkedAt: 0 });
 
   useEffect(() => {
+    if (PREVIEW_PM !== null) return;
     const controller = new AbortController();
     let timer: number | undefined;
     let newest: string | null = null;
